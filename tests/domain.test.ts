@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   totals,
   fleetFor,
+  fleetOptions,
+  deliveryArea,
   validateCart,
   estimate,
   forecast,
@@ -63,4 +65,24 @@ test("forecast returns recommendation and refuses insufficient history", () => {
   const f = forecast(initialProducts[0])!;
   assert.equal(f.demand, 471);
   assert.equal(f.reorder, 303);
+});
+
+test("small loads use a storage motor and respect both capacity limits", () => {
+  assert.equal(fleetFor(7, .02).name, "Motor Boks");
+  assert.equal(fleetFor(25, .12).name, "Motor Boks");
+  assert.equal(fleetFor(26, .1).name, "Pikap");
+  assert.equal(fleetFor(7, .13).name, "Pikap");
+  assert.equal(fleetOptions(50, .04)[0].available, false);
+  assert.equal(fleetOptions(7, .02).length, 4);
+});
+test("address changes motor and pickup fees while truck rates stay fixed", () => {
+  assert.equal(deliveryArea("Jl. Mawar, Kota BOGOR"), "Bogor");
+  assert.equal(deliveryArea("Jl. Mawar, Depok"), "Luar Bogor");
+  for (const [address, motor, pickup] of [["Kabupaten Bogor", 20000, 50000], ["Jakarta", 50000, 70000]] as const) {
+    const options = fleetOptions(7, .02, address);
+    assert.equal(options[0].fee, motor);
+    assert.equal(options[1].fee, pickup);
+    assert.equal(options[2].fee, 250000);
+    assert.equal(options[3].fee, 650000);
+  }
 });

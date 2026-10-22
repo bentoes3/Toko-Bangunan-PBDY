@@ -5327,3 +5327,12 @@ td small {
   max-height: none;
   object-fit: contain;
 }
+
+/* Checkout fleet choices */
+.fleet-options { display: grid; gap: 12px; }
+.fleet-option { cursor: pointer; border-color: var(--border); background: transparent; margin: 0; }
+.fleet-option.is-selected { border-color: var(--green); background: var(--soft); }
+.fleet-option.unavailable { opacity: .55; cursor: not-allowed; }
+.fleet-option input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--green); }
+.fleet-option:focus-within { outline: 2px solid var(--green); outline-offset: 3px; }
+.fleet-badge { display: inline-block; margin: 4px 0 0 8px; font-size: 10px; color: var(--green); font-weight: 700; }

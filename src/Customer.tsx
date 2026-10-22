@@ -5,6 +5,7 @@ import {
   Camera,
   Search,
   Truck,
+  Bike,
   ShieldCheck,
   PackageCheck,
   Sparkles,
@@ -39,6 +40,8 @@ import {
   money,
   totals,
   fleetFor,
+  fleetOptions,
+  deliveryArea,
   conversion,
   estimate,
   statuses,
@@ -63,6 +66,7 @@ const categoryIcons = [
   Wallet,
   ScanLine,
   Truck,
+  Bike,
   PackageCheck,
   SlidersHorizontal,
 ];
@@ -683,8 +687,12 @@ export function Checkout() {
   const [method, setMethod] = useState("Transfer Bank");
   const [paid, setPaid] = useState(false);
   const [error, setError] = useState("");
-  const t = totals(cart, products),
-    fleet = fleetFor(t.weight, t.volume);
+  const [address, setAddress] = useState("");
+  const [selectedFleet, setSelectedFleet] = useState<string | null>(null);
+  const t = totals(cart, products);
+  const options = fleetOptions(t.weight, t.volume, address || "Bogor");
+  const recommended = fleetFor(t.weight, t.volume, address || "Bogor");
+  const fleet = options.find((option) => option.name === selectedFleet && option.available) || recommended;
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -783,6 +791,12 @@ export function Checkout() {
                 Alamat lengkap proyek
                 <textarea
                   name="address"
+                  value={address}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setPaid(false);
+                    setError("");
+                  }}
                   minLength={12}
                   required
                   placeholder="Jalan, nomor, kelurahan, kecamatan, Kabupaten Bogor"
@@ -801,27 +815,31 @@ export function Checkout() {
             <h3>
               <span className="step-number">2</span> Armada rekomendasi
             </h3>
-            <div className="fleet-selected">
-              <Truck size={35} />
-              <div>
-                <strong>
-                  {fleet.name}{" "}
-                  {fleet.trips > 1 && `· ${fleet.trips} perjalanan`}
-                </strong>
-                <p>
-                  Kapasitas {fleet.capacity.toLocaleString("id-ID")} kg /{" "}
-                  {fleet.space} m³ per perjalanan
-                </p>
-                <small>
-                  Muatan Anda: {t.weight.toLocaleString("id-ID")} kg ·{" "}
-                  {t.volume.toFixed(2)} m³
-                </small>
-              </div>
-              <CheckCircle2 className="green-text" />
+            <div className="fleet-options" role="radiogroup" aria-label="Pilihan armada pengiriman">
+              {options.map((option) => (
+                <label key={option.name} className={"fleet-selected fleet-option " + (fleet.name === option.name ? "is-selected" : "") + (!option.available ? " unavailable" : "")}>
+                  <input type="radio" name="fleet" value={option.name}
+                    aria-label={option.name} checked={fleet.name === option.name}
+                    disabled={!option.available}
+                    onChange={() => { setSelectedFleet(option.name); setPaid(false); setError(""); }} />
+                  {option.name === "Motor Boks" ? <Bike size={28} /> : <Truck size={28} />}
+                  <div>
+                    <strong>{option.name}</strong>
+                    {option.name === recommended.name && <span className="fleet-badge">Direkomendasikan</span>}
+                    <p>Kapasitas {option.capacity.toLocaleString("id-ID")} kg / {option.space} m³ per perjalanan</p>
+                    {option.name === "Motor Boks" && <small>Motor dengan boks penyimpanan untuk barang kecil.</small>}
+                    {!option.available ? <small>Muatan melebihi kapasitas armada ini.</small> : <small>{money(option.fee)}{option.trips > 1 ? ` · ${option.trips} perjalanan` : " / pengiriman"}</small>}
+                  </div>
+                  {fleet.name === option.name && <CheckCircle2 className="green-text" size={20} />}
+                </label>
+              ))}
             </div>
             <p className="small muted">
-              Ongkir wilayah Bogor. Armada dipilih otomatis berdasarkan berat
-              dan volume.
+              Muatan Anda: {t.weight.toLocaleString("id-ID")} kg · {t.volume.toFixed(2)} m³.
+              {address.trim() ? ` Tujuan: ${deliveryArea(address)}.` : " Isi alamat untuk menghitung ongkir. Tarif sementara: Bogor."}
+              {" "}Alamat yang mencantumkan “Bogor” memakai tarif Bogor; alamat lainnya memakai tarif luar Bogor.
+              Motor: Rp20.000 / Rp50.000. Pikap: Rp50.000 / Rp70.000 (Bogor / luar Bogor).
+              Tarif truk tetap per perjalanan. Rekomendasi mengikuti berat dan volume; Anda dapat memilih armada lain yang sesuai.
             </p>
           </section>
           <section className="panel form-panel">

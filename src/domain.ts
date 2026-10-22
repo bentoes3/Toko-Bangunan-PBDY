@@ -101,19 +101,27 @@ export function totals(cart: CartItem[], products: Product[]) {
     { subtotal: 0, weight: 0, volume: 0 },
   );
 }
-export function fleetFor(weight: number, volume: number) {
-  const base =
-    weight <= 1000 && volume <= 4
-      ? { name: "Pikap", capacity: 1000, space: 4, fee: 100000 }
-      : weight <= 4000 && volume <= 12
-        ? { name: "Truk Engkel", capacity: 4000, space: 12, fee: 250000 }
-        : { name: "Truk Fuso", capacity: 10000, space: 30, fee: 650000 };
-  const trips = Math.max(
-    1,
-    Math.ceil(weight / base.capacity),
-    Math.ceil(volume / base.space),
-  );
-  return { ...base, trips, fee: base.fee * trips };
+export const fleets = [
+  { name: "Motor Boks", capacity: 25, space: 0.12, fee: 20000 },
+  { name: "Pikap", capacity: 1000, space: 4, fee: 50000 },
+  { name: "Truk Engkel", capacity: 4000, space: 12, fee: 250000 },
+  { name: "Truk Fuso", capacity: 10000, space: 30, fee: 650000 },
+];
+export function deliveryArea(address: string) {
+  return /\bbogor\b/i.test(address) ? "Bogor" : "Luar Bogor";
+}
+export function fleetOptions(weight: number, volume: number, address = "Bogor") {
+  const outside = deliveryArea(address) === "Luar Bogor";
+  return fleets.map((base, index) => {
+    const trips = Math.max(1, Math.ceil(weight / base.capacity), Math.ceil(volume / base.space));
+    const rate = base.name === "Motor Boks" ? (outside ? 50000 : 20000)
+      : base.name === "Pikap" ? (outside ? 70000 : 50000) : base.fee;
+    return { ...base, trips, fee: rate * trips,
+      available: trips === 1 || index === fleets.length - 1 };
+  });
+}
+export function fleetFor(weight: number, volume: number, address = "Bogor") {
+  return fleetOptions(weight, volume, address).find((fleet) => fleet.available)!;
 }
 export function validateCart(cart: CartItem[], products: Product[]) {
   if (!cart.length) return "Keranjang masih kosong.";
