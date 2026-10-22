@@ -60,6 +60,8 @@ import {
 } from "./domain";
 import { purchasePDF, orderPDF } from "./documents";
 import { readImage } from "./AI";
+import { groupInventory, stockStatus } from "./inventory";
+import { initialProducts } from "./data";
 export const adminLinks = [
   { id: "dashboard", label: "Ringkasan", icon: LayoutDashboard },
   { id: "produk", label: "Produk", icon: Box },
@@ -191,7 +193,7 @@ export function AdminShell({
 }) {
   const { logout, dark, setDark, products } = useStore();
   const [menu, setMenu] = useState(false);
-  const low = products.filter((p) => p.active && p.stock <= p.safety).length;
+  const low = products.filter((p) => p.active && stockStatus(p).id !== "safe").length;
   return (
     <div className="admin-shell">
       <aside className={"admin-sidebar " + (menu ? "open" : "")}>
@@ -272,7 +274,7 @@ export function AdminShell({
             <a
               href="#/admin/stok"
               className="admin-alert"
-              aria-label={low + " produk stok menipis"}
+              aria-label={low + " produk perlu perhatian stok"}
             >
               <TriangleAlert size={19} />
               <span>{low}</span>
@@ -323,7 +325,11 @@ const baseHistory = Array.from({ length: 30 }, (_, i) => ({
 export function Dashboard() {
   const { orders, products } = useStore();
   const [period, setPeriod] = useState("month");
-  const low = products.filter((p) => p.active && p.stock <= p.safety);
+  const low = products
+    .filter((p) => p.active && stockStatus(p).id !== "safe")
+    .sort((a, b) => a.stock - b.stock);
+  const emptyCount = low.filter((p) => stockStatus(p).id === "empty").length;
+  const restockCount = low.length - emptyCount;
   const hist = period === "month" ? baseHistory : baseHistory.slice(-7);
   const demoRevenue = hist.reduce((s, i) => s + i.revenue, 0);
   const actualRevenue = orders.reduce((s, o) => s + o.subtotal, 0);
@@ -361,7 +367,7 @@ export function Dashboard() {
     {
       label: "Produk aktif",
       value: String(products.filter((p) => p.active).length),
-      change: `${low.length} produk perlu restock`,
+      change: `${restockCount} perlu restock · ${emptyCount} kosong`,
       icon: Package,
     },
   ];
@@ -391,7 +397,7 @@ export function Dashboard() {
             </div>
             <strong>{c.value}</strong>
             <small
-              className={i === 3 && low.length ? "amber-text" : "green-text"}
+              className={i === 3 && low.length ? (emptyCount ? "red-text" : "amber-text") : "green-text"}
             >
               {i === 3 && low.length ? (
                 <TriangleAlert size={13} />
@@ -432,13 +438,13 @@ export function Dashboard() {
                   dataKey="day"
                   tickLine={false}
                   axisLine={false}
-                  fontSize={11}
+                  fontSize={14}
                   tickFormatter={(v) => String(v)}
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  fontSize={11}
+                  fontSize={14}
                   tickFormatter={(v) => `${v / 1000000}jt`}
                   width={44}
                 />
@@ -471,20 +477,23 @@ export function Dashboard() {
             <h3>Perlu perhatian</h3>
             <span className="alert-count">{low.length}</span>
           </div>
-          <p className="small muted">Stok di bawah batas aman.</p>
-          {low.map((p) => (
+          <p className="small muted">
+            {restockCount} perlu restock · {emptyCount} kosong
+          </p>
+          {low.slice(0, 5).map((p) => (
             <div className="low-item" key={p.id}>
-              <span className="low-icon">
+              <span className={"low-icon stock-" + stockStatus(p).id}>
                 <Package size={20} />
               </span>
               <div>
                 <strong>{p.name}</strong>
                 <small>
-                  <span className="amber-text">
+                  <span className={stockStatus(p).textClass}>
                     {p.stock} {p.unit}
                   </span>{" "}
                   · Minimum {p.safety}
                 </small>
+                <Tag tone={stockStatus(p).tone}>{stockStatus(p).label}</Tag>
               </div>
               <a href="#/admin/stok" aria-label={"Restock " + p.name}>
                 <ArrowUpRight size={18} />
@@ -586,14 +595,23 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
   const { products, setProducts, movements, setMovements, notify } = useStore();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const [category, setCategory] = useState("all");
   const [po, setPo] = useState<Product | null>(null);
   const [edit, setEdit] = useState<Product | null | undefined>(undefined);
   const [adjust, setAdjust] = useState<Product | null>(null);
   const list = products.filter(
     (p) =>
-      `${p.name} ${p.sku}`.toLowerCase().includes(query.toLowerCase()) &&
-      (filter === "all" || (filter === "low" ? p.stock <= p.safety : p.active)),
+      `${p.name} ${p.sku} ${p.brand} ${p.category}`.toLowerCase().includes(query.toLowerCase()) &&
+      (category === "all" || p.category === category) &&
+      (filter === "all" || (filter === "active" ? p.active : stockStatus(p).id === filter)),
   );
+  const groups = groupInventory(list);
+  const categories = [...new Set(products.map((p) => p.category))];
+  const counts = {
+    safe: products.filter((p) => stockStatus(p).id === "safe").length,
+    low: products.filter((p) => stockStatus(p).id === "low").length,
+    empty: products.filter((p) => stockStatus(p).id === "empty").length,
+  };
   return (
     <>
       <AdminTitle
@@ -602,7 +620,7 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
         description={
           manage
             ? "Kelola detail, harga, dan ketersediaan katalog Anda."
-            : "Stok terhubung langsung dengan pesanan dan barang masuk."
+            : "Periksa stok per jenis material, lalu rencanakan pembelian dengan mudah."
         }
         action={
           manage ? (
@@ -616,27 +634,34 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
           )
         }
       />
-      <div className="mini-stats">
+      <div className="mini-stats inventory-stats">
         <div className="panel">
           <Package size={20} />
           <span>
             <strong>{products.length}</strong>Total produk
           </span>
         </div>
-        <div className="panel">
+        <div className="panel stock-stat safe">
           <ShieldCheck size={20} />
           <span>
-            <strong>{products.filter((p) => p.stock > p.safety).length}</strong>
+            <strong>{counts.safe}</strong>
             Stok aman
           </span>
         </div>
-        <div className="panel">
+        <div className="panel stock-stat low">
           <TriangleAlert size={20} />
           <span>
             <strong>
-              {products.filter((p) => p.stock <= p.safety).length}
+              {counts.low}
             </strong>
             Perlu restock
+          </span>
+        </div>
+        <div className="panel stock-stat is-empty">
+          <Box size={20} />
+          <span>
+            <strong>{counts.empty}</strong>
+            Stok kosong
           </span>
         </div>
       </div>
@@ -648,24 +673,43 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
               aria-label="Cari inventaris"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama atau SKU produk..."
+              placeholder="Cari nama, merek, atau SKU..."
             />
           </div>
+          <select
+            aria-label="Filter jenis material"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="all">Semua material</option>
+            {categories.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
           <select
             aria-label="Filter inventaris"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           >
             <option value="all">Semua produk</option>
-            <option value="low">Stok menipis</option>
+            <option value="safe">Aman</option>
+            <option value="low">Perlu restock</option>
+            <option value="empty">Kosong</option>
             <option value="active">Produk aktif</option>
           </select>
         </div>
+        <div className="inventory-summary">
+          <span className="small muted">{list.length} produk · {groups.length} jenis material</span>
+          <div className="stock-status-legend" aria-label="Keterangan status stok">
+            <Tag tone="green">Aman: di atas batas</Tag>
+            <Tag tone="yellow">Perlu restock: sampai batas aman</Tag>
+            <Tag tone="red">Kosong: 0</Tag>
+          </div>
+        </div>
         <div className="table-scroll">
-          <table>
+          <table className="inventory-table">
             <thead>
               <tr>
                 <th>Produk / SKU</th>
+                <th>Satuan</th>
                 <th>Harga dasar</th>
                 <th>Stok</th>
                 <th>Batas aman</th>
@@ -673,8 +717,21 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
                 <th>Tindakan</th>
               </tr>
             </thead>
-            <tbody>
-              {list.map((p) => (
+            {groups.map((group) => (
+            <tbody key={group.category}>
+              <tr className="inventory-group-heading">
+                <th colSpan={7} scope="rowgroup">
+                  <div className="inventory-group-title">
+                    <span><Package size={18} /> <strong>{group.category}</strong> <small>{group.products.length} produk</small></span>
+                    <span className="inventory-group-counts">
+                      <span className="green-text">{group.counts.safe} aman</span>
+                      <span className="amber-text">{group.counts.low} restock</span>
+                      <span className="red-text">{group.counts.empty} kosong</span>
+                    </span>
+                  </div>
+                </th>
+              </tr>
+              {group.products.map((p) => (
                 <tr key={p.id}>
                   <td>
                     <div className="table-product">
@@ -682,38 +739,26 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
                       <div>
                         <strong>{p.name}</strong>
                         <small>
-                          {p.sku} · {p.category}
+                          {p.sku} · {p.brand}{!p.active && " · Nonaktif"}
                         </small>
                       </div>
                     </div>
                   </td>
+                  <td><span className="inventory-unit">{p.unit}</span></td>
                   <td>
                     {money(p.price)}
-                    <small>/ {p.unit}</small>
                   </td>
                   <td>
-                    <strong className={p.stock <= p.safety ? "amber-text" : ""}>
-                      {p.stock} {p.unit}
+                    <strong className={stockStatus(p).textClass}>
+                      {p.stock}
                     </strong>
                   </td>
                   <td>
-                    {p.safety} {p.unit}
+                    {p.safety}
                   </td>
                   <td>
-                    <Tag
-                      tone={
-                        !p.active
-                          ? "gray"
-                          : p.stock <= p.safety
-                            ? "yellow"
-                            : "green"
-                      }
-                    >
-                      {!p.active
-                        ? "Nonaktif"
-                        : p.stock <= p.safety
-                          ? "Stok menipis"
-                          : "Stok aman"}
+                    <Tag tone={stockStatus(p).tone}>
+                      {stockStatus(p).label}
                     </Tag>
                   </td>
                   <td>
@@ -769,6 +814,7 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
                 </tr>
               ))}
             </tbody>
+            ))}
           </table>
         </div>
         {!list.length && (
@@ -870,7 +916,7 @@ export function Inventory({ manage = false }: { manage?: boolean }) {
                 />
               </label>
               <label>
-                Safety stock
+                Batas aman ({adjust.unit})
                 <input
                   type="number"
                   name="safety"
@@ -962,9 +1008,10 @@ export function RestockModal({
             <div>
               <h3>{product.name}</h3>
               <p>
-                Stok {product.stock} {product.unit} · Safety stock{" "}
+                Stok {product.stock} {product.unit} · Batas aman{" "}
                 {product.safety}
               </p>
+              <Tag tone={stockStatus(product).tone}>{stockStatus(product).label}</Tag>
             </div>
           </div>
           <div className="insight">
@@ -1120,15 +1167,7 @@ function ProductEditor({
           <label>
             Kategori
             <select name="category" defaultValue={product?.category || "Semen"}>
-              {[
-                "Semen",
-                "Besi & Baja",
-                "Cat",
-                "Pipa & Fitting",
-                "Pasir & Batu",
-                "Keramik",
-                "Peralatan",
-              ].map((c) => (
+              {Array.from(new Set([...initialProducts, ...products].map((p) => p.category))).map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
@@ -1141,7 +1180,7 @@ function ProductEditor({
               type="number"
               min="0"
               step="1"
-              defaultValue={product?.safety || 10}
+              defaultValue={product?.safety ?? 10}
             />
           </label>
           {[
@@ -1174,15 +1213,15 @@ function ProductEditor({
             />
           </label>
           <label className="span-2">
-            URL gambar (HTTPS)
+            Gambar produk (aset lokal atau URL HTTPS)
             <input
               name="image"
-              type="url"
-              pattern="https://.*"
+              type="text"
+              pattern="(/images/.+|https://.+)"
               required
               defaultValue={
                 product?.image ||
-                "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600"
+                "/images/material-default.svg"
               }
             />
           </label>
@@ -1782,9 +1821,10 @@ export function Forecast() {
               </div>
               <div>
                 <span>Stok saat ini</span>
-                <strong>
+                <strong className={stockStatus(p).textClass}>
                   {p.stock} <small>{p.unit}</small>
                 </strong>
+                <Tag tone={stockStatus(p).tone}>{stockStatus(p).label}</Tag>
               </div>
               <div>
                 <span>Perkiraan cakupan stok</span>
@@ -1805,10 +1845,10 @@ export function Forecast() {
                     dataKey="day"
                     tickLine={false}
                     axisLine={false}
-                    fontSize={11}
+                    fontSize={14}
                     tickFormatter={(v) => (v <= 0 ? `${v}h` : `+${v}h`)}
                   />
-                  <YAxis fontSize={11} axisLine={false} tickLine={false} />
+                  <YAxis fontSize={14} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{
                       background: "var(--surface)",
@@ -1878,7 +1918,8 @@ export function Forecast() {
                         <small>{p.brand}</small>
                       </td>
                       <td>
-                        {p.stock} {p.unit}
+                        <span className={stockStatus(p).textClass}>{p.stock} {p.unit}</span>
+                        <small><Tag tone={stockStatus(p).tone}>{stockStatus(p).label}</Tag></small>
                       </td>
                       <td>
                         {f ? `${f.demand} ${p.unit}` : "Data belum cukup"}

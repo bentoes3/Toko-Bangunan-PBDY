@@ -5,3 +5,5 @@ Local demo assets:
 - Source README: "This project is free to use and does not contains any license."
 - Product SVGs: custom placeholder illustrations made for this PB.DY simulation, not official packaging images.
 - Brand/product names are illustrative catalog data.
+- pbdy-logo.png: original PBDY logo provided by the shop owner for this website.
+- New product SVGs: custom vector illustrations of material/tool types for the expanded demo catalog.

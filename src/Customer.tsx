@@ -49,15 +49,11 @@ import {
   type Order,
 } from "./domain";
 import { orderPDF } from "./documents";
+import { initialProducts } from "./data";
+import { stockStatus } from "./inventory";
 export const categories = [
   "Semua Material",
-  "Semen",
-  "Besi & Baja",
-  "Cat",
-  "Pipa & Fitting",
-  "Pasir & Batu",
-  "Keramik",
-  "Peralatan",
+  ...Array.from(new Set(initialProducts.map((p) => p.category))),
 ];
 const categoryIcons = [
   Box,
@@ -116,18 +112,9 @@ export function Home({
               <Sparkles size={18} /> Hitung Kebutuhan
             </button>
           </div>
-          <div className="hero-social">
-            <div className="avatars">
-              <span>J</span>
-              <span>A</span>
-              <span>R</span>
-            </div>
-            <div>
-              <span className="stars">★★★★★</span>
-              <p>
-                <strong>1.200+</strong> pelanggan membangun bersama kami
-              </p>
-            </div>
+          <div className="hero-assurance">
+            <span><PackageCheck size={20} /><strong>{products.filter(p => p.active).length} pilihan produk</strong></span>
+            <span className="muted">Untuk bangun baru & renovasi</span>
           </div>
         </div>
         <div className="hero-art">
@@ -198,7 +185,7 @@ export function Home({
         </div>
         <div className="category-grid">
           {categories.slice(1).map((c, i) => {
-            const Icon = categoryIcons[i + 1];
+            const Icon = categoryIcons[(i + 1) % categoryIcons.length];
             return (
               <a
                 key={c}
@@ -519,8 +506,8 @@ export function ProductDetail({
           </h2>
           <p>{p.description}</p>
           <div className="stock">
-            <span className="dot" />
-            Stok: {current.stock} {p.unit}
+            <span className={"dot stock-" + stockStatus(current).id} />
+            {current.stock <= 0 ? "Stok habis" : `Stok: ${current.stock} ${p.unit}`}
           </div>
           <label htmlFor="detail-unit">Pilih satuan</label>
           <select

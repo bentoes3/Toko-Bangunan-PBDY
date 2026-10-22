@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { initialProducts, initialSuppliers, initialOrders } from "./data";
+import { appendMissingCatalogProducts } from "./catalog";
 import {
   conversion,
   validateCart,
@@ -20,6 +21,17 @@ function useSaved<T>(key: string, initial: T) {
   const [value, set] = useState<T>(() => {
     try {
       const s = localStorage.getItem("pbdy-v1-" + key);
+      if (key === "products" && !localStorage.getItem("pbdy-catalog-v2")) {
+        const next = s ? appendMissingCatalogProducts(JSON.parse(s)) : initial;
+        // Save products before the marker so interrupted writes can be retried safely.
+        try {
+          localStorage.setItem("pbdy-v1-" + key, JSON.stringify(next));
+          localStorage.setItem("pbdy-catalog-v2", "1");
+        } catch {
+          console.warn("Katalog diperbarui di memori; penyimpanan browser tidak tersedia.");
+        }
+        return next as T;
+      }
       return s ? JSON.parse(s) : initial;
     } catch {
       return initial;

@@ -61,6 +61,7 @@ const InvoiceExtraction = lazy(() =>
 );
 import type { Product } from "./domain";
 import "./styles.css";
+import "./brand.css";
 function App() {
   const { dark, setDark, cart, authenticated } = useStore();
   const [route, setRoute] = useState(location.hash.slice(1) || "/");

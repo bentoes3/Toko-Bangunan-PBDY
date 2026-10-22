@@ -20,13 +20,15 @@ npm test          # Pengujian aturan bisnis
 npm run test:e2e  # Pengujian browser end-to-end
 ```
 
-Tes browser menggunakan Chromium sistem `/usr/bin/chromium`. Untuk mesin tanpa Chromium sistem, instal browser Playwright dengan `npx playwright install chromium` dan sesuaikan `executablePath` pada `playwright.config.ts`.
+Tes browser memilih Microsoft Edge di Windows, Chromium sistem di Linux bila tersedia, atau browser Playwright bawaan (instal dengan `npx playwright install chromium`). Override executable melalui `PLAYWRIGHT_CHROMIUM_EXECUTABLE` bila diperlukan.
+
+Deployment produksi menggunakan Cloudflare Pages **https://tokopbdy.pages.dev** (proyek `tokopbdy`, Direct Upload). Build `dist/`, lalu unggah isinya sebagai ZIP pada **Create deployment → Production**. Proyek ini tidak terhubung otomatis ke GitHub; push sumber tidak menerbitkan situs dengan sendirinya.
 
 ## Akses & alur demo
 
 - Customer: halaman utama, katalog (`#/katalog`), keranjang (`#/keranjang`), checkout (`#/checkout`), dan pesanan (`#/pesanan`).
 - Portal admin: `#/admin`. Username **admin_pbdy**, password **adminpassword123**, atau tombol **Gunakan akun demo**.
-- Data awal: 12 material, 7 kategori, 3 supplier, 4 pesanan contoh, serta riwayat penjualan ilustratif.
+- Data awal: 52 produk dalam 15 kategori, 3 supplier, 4 pesanan contoh, serta riwayat penjualan ilustratif. Material mencakup pondasi, dinding, struktur, atap, plafon, sanitasi, listrik, finishing, peralatan dan alat pelindung.
 - Semua nominal dalam Rupiah. Semua gambar produk merupakan ilustrasi placeholder material, bukan foto kemasan resmi. Warna dan identitas visual terinspirasi logo PB.DY.
 
 Alur uji yang disarankan:
@@ -44,6 +46,8 @@ Alur uji yang disarankan:
 Aplikasi ini berjalan sepenuhnya di browser. **Tidak memerlukan backend, database, token API, payment gateway, atau kredensial tambahan.** State disimpan di `localStorage` dengan prefix `pbdy-v1-`; sesi admin di `sessionStorage`. Pembaruan lintas tab menggunakan event `storage`. Data tidak dibagikan ke browser/perangkat lain, dan akses admin merupakan guard UI demo, bukan otentikasi server untuk produksi. Pesanan contoh terlihat bersama untuk demonstrasi.
 
 Untuk mengembalikan data contoh: hapus penyimpanan situs melalui DevTools → Application → Local Storage, kemudian muat ulang. Tidak ada transaksi atau notifikasi eksternal yang dikirim. Draft PO diunduh, tidak dikirim otomatis ke supplier.
+
+Pembaruan katalog v2 menambahkan 40 produk sekali saja pada browser lama. Edit produk, stok, keranjang, pesanan dan riwayat yang tersimpan dipertahankan. Produk awal yang dihapus tidak dikembalikan. Status inventaris: **Aman** (hijau, stok > batas aman), **Perlu restock** (kuning, 0 < stok ≤ batas aman), **Kosong** (merah, stok ≤ 0). Inventaris dikelompokkan per jenis material dengan kolom Satuan tersendiri. Harga dan stok baru merupakan data contoh, bukan daftar harga atau stok toko yang diverifikasi.
 
 ### Fitur AI simulasi
 
@@ -69,4 +73,4 @@ UI mendukung dark/light mode yang persisten, layar mobile 320px ke atas, reduced
 
 ## Atribusi aset
 
-Font Manrope dan DM Sans dari Google Fonts, dengan lisensi OFL di `public/fonts/`. Foto rumah demonstrasi dari [Realvine / codewithsadee](https://github.com/codewithsadee/realvine) (`property-1.jpg`, `hero-bg.jpg`); README sumber menyatakan proyek bebas digunakan. Ilustrasi produk SVG dibuat khusus sebagai placeholder untuk aplikasi ini; nama merek digunakan untuk simulasi katalog.
+Font antarmuka Source Sans 3 dari Google Fonts, dengan lisensi OFL di `public/fonts/OFL-SourceSans3.txt`. Font lokal menggunakan ukuran teks antarmuka minimal 14px, dengan teks utama 17–19px. Logo PBDY disediakan pemilik toko. Foto rumah demonstrasi dari [Realvine / codewithsadee](https://github.com/codewithsadee/realvine) (`property-1.jpg`, `hero-bg.jpg`); README sumber menyatakan proyek bebas digunakan. Ilustrasi produk SVG dibuat khusus sebagai placeholder untuk aplikasi ini; nama merek digunakan untuk simulasi katalog.

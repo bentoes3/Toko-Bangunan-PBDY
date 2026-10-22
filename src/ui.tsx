@@ -13,27 +13,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useStore } from "./store";
 import { money, type Product } from "./domain";
+import { stockStatus } from "./inventory";
 export function Logo({ small = false }: { small?: boolean }) {
   return (
     <a
       href="#/"
       className={"logo " + (small ? "small" : "")}
-      aria-label="PB.DY Beranda"
+      aria-label="PBDY Beranda"
     >
-      <span className="logo-mark">
-        <svg viewBox="0 0 42 38" fill="none">
-          <path
-            d="M3 19 21 4l18 15M9 17v17h24V17"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeLinecap="square"
-          />
-          <path d="M16 21h10v13H16z" fill="currentColor" />
-        </svg>
-      </span>
-      <span>
-        PB<span className="logo-dot">.</span>DY<small>TOKO BANGUNAN</small>
-      </span>
+      <span className="brand-image"><img src="/images/pbdy-logo.png" alt="PBDY" width="1080" height="626" /></span>
+      <span className="brand-caption">TOKO BANGUNAN<small>Bangun bersama PBDY</small></span>
     </a>
   );
 }
@@ -207,7 +196,7 @@ export function ProductCard({
           {p.name}
         </button>
         <div className="stock">
-          <span className={p.stock <= p.safety ? "dot amber" : "dot"} />
+          <span className={"dot stock-" + stockStatus(p).id} />
           {p.stock > 0 ? `Tersedia ${p.stock} ${p.unit}` : "Stok habis"}
         </div>
         <div className="product-bottom">

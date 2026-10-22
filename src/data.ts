@@ -1,4 +1,6 @@
 import type { Product, Supplier, Order } from "./domain";
+import { expandedDemoProducts } from "./catalog";
+// Data simulasi: 12 produk awal tetap memakai nilai dan stok sebelumnya.
 export const initialProducts: Product[] = [
   {
     id: "semen",
@@ -263,6 +265,7 @@ export const initialProducts: Product[] = [
     sold: 7,
     active: true,
   },
+  ...expandedDemoProducts,
 ];
 export const initialSuppliers: Supplier[] = [
   {
@@ -271,7 +274,7 @@ export const initialSuppliers: Supplier[] = [
     contact: "Ibu Ratna",
     phone: "0812-9012-3344",
     term: 30,
-    categories: "Semen, Cat, Keramik",
+    categories: "Semen, Cat, Keramik, Plafon, Pelapis & Perekat",
     address: "Jl. Raya Cibinong No. 28, Bogor",
   },
   {
@@ -280,7 +283,7 @@ export const initialSuppliers: Supplier[] = [
     contact: "Pak Hendra",
     phone: "0813-8812-7755",
     term: 14,
-    categories: "Besi & Baja, Peralatan",
+    categories: "Besi & Baja, Peralatan, Atap & Talang, Listrik, Alat Pelindung",
     address: "Jl. Raya Bogor Km. 42, Bogor",
   },
   {
@@ -289,7 +292,7 @@ export const initialSuppliers: Supplier[] = [
     contact: "Pak Agus",
     phone: "0857-2211-8899",
     term: 7,
-    categories: "Pasir & Batu, Pipa & Fitting",
+    categories: "Pasir & Batu, Pipa & Fitting, Bata & Blok, Kayu & Papan, Sanitasi",
     address: "Jl. Alternatif Sentul No. 12, Bogor",
   },
 ];
