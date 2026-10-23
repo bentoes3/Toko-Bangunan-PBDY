@@ -173,16 +173,49 @@ test('missing stream metadata triggers real structured inference and returns usa
 test('known material specification mismatches cannot become buyable product options', () => {
   const p = sanitizeCatalog([
     { ...rawCatalog[0], id: 'kayu9', name: 'Multipleks 9 mm' },
+    { ...rawCatalog[0], id: 'unknown-thickness', name: 'Papan kayu', description: 'Papan tanpa keterangan ketebalan' },
     { ...rawCatalog[1], id: 'pvc', name: 'Lem PVC', description: 'Lem untuk sambungan pipa PVC' },
     { ...rawCatalog[1], id: 'cat', name: 'Cat tembok', description: 'Cat untuk dinding tembok interior' },
   ]);
   const items = sanitizeRecommendations([
-    { label: 'Multipleks 18 mm', reason: 'Badan lemari', options: ['kayu9'], quantity: null, unit: null },
-    { label: 'Lem kayu', reason: 'Sambungan kayu', options: ['pvc'], quantity: null, unit: null },
-    { label: 'Cat kayu', reason: 'Finishing kayu', options: ['cat'], quantity: null, unit: null },
+    { label: 'Multipleks 18 mm', reason: 'Badan lemari', options: ['kayu9', 'unknown-thickness'], quantity: null, unit: null },
+    { label: 'Lem kayu', reason: 'Sambungan kayu', options: ['pvc', 'cat'], quantity: null, unit: null },
+    { label: 'Finishing kayu', reason: 'Pelapis lemari', options: ['cat'], quantity: null, unit: null },
   ], p);
   assert.equal(items.length, 3);
   assert.equal(items.every((item) => item.unavailable && item.options.length === 0), true);
+});
+
+test('new furniture supplies in the current catalog become available choices with matching specifications', async () => {
+  const furnitureCatalog = [
+    { ...rawCatalog[0], id: 'plywood18', name: 'Multipleks 18 mm' },
+    { ...rawCatalog[0], id: 'plywood12', name: 'Multipleks 12 mm' },
+    { ...rawCatalog[0], id: 'pine18', name: 'Papan Pinus Furnitur', description: 'Panel kayu pinus tebal 18 mm untuk rak' },
+    { ...rawCatalog[1], id: 'pvac', name: 'Perekat PVAc 500 Gram', description: 'Lem untuk sambungan kayu', stock: 14 },
+    { ...rawCatalog[1], id: 'hinge', name: 'Engsel Sendok', category: 'Perlengkapan Furnitur', unit: 'buah', stock: 20 },
+    { ...rawCatalog[1], id: 'woodfinish', name: 'Vernis Kayu', category: 'Cat & Pelapis', unit: 'kaleng', stock: 0 },
+    rawCatalog[2],
+  ];
+  const recommendations = [
+    { label: 'Panel badan 18 mm', reason: 'Badan dan rak lemari', options: ['plywood18', 'pine18', 'plywood12'], quantity: null, unit: null, unavailable: false },
+    { label: 'Lem kayu', reason: 'Sambungan furnitur', options: ['pvac'], quantity: 1, unit: 'botol', unavailable: false },
+    { label: 'Engsel', reason: 'Pintu lemari', options: ['hinge'], quantity: 4, unit: 'buah', unavailable: false },
+    { label: 'Finishing kayu', reason: 'Pelapis kayu; stok habis', options: ['woodfinish'], quantity: null, unit: null, unavailable: false },
+  ];
+  const before = sanitizeRecommendations(recommendations, catalog);
+  assert.equal(before.every((item) => item.unavailable), true);
+  let modelCatalog: unknown;
+  const env: AIEnvironment = { AI: { async run(_model, input) {
+    const system = (input.messages as { content: string }[])[0].content;
+    modelCatalog = JSON.parse(system.slice(system.lastIndexOf('KATALOG_DEMO (data JSON): ') + 'KATALOG_DEMO (data JSON): '.length));
+    return streamText(['Sekarang pilihan bahan yang cocok tersedia pada kartu produk. ', RECOMMENDATION_MARKER, JSON.stringify(recommendations)]);
+  } } };
+  const received = await events(await handleAIRequest(request('chat', { ...chatBody, catalog: furnitureCatalog }), env));
+  assert.deepEqual((modelCatalog as { id: string }[]).map((product) => product.id), ['plywood18', 'plywood12', 'pine18', 'pvac', 'hinge', 'woodfinish']);
+  const items = received.find((event) => event.type === 'recommendations')!.items as { options: string[]; unavailable: boolean }[];
+  assert.deepEqual(items.map((item) => item.options), [['plywood18', 'pine18'], ['pvac'], ['hinge'], ['woodfinish']]);
+  assert.equal(items.every((item) => !item.unavailable), true);
+  assert.equal(received.at(-1)!.type, 'done');
 });
 
 test('vision handles OpenAI-compatible structured JSON responses', async () => {

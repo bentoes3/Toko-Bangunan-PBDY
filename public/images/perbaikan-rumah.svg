@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="520" viewBox="0 0 720 520" role="img" aria-labelledby="title desc">
+  <title id="title">Ilustrasi perlengkapan perbaikan rumah</title>
+  <desc id="desc">Kartrid sealant dengan ujung runcing, lakban kertas, dan rol cat kecil untuk perbaikan rumah.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#faf8f2"/><stop offset="1" stop-color="#e9e6dc"/></linearGradient>
+    <linearGradient id="white" x2="1" y2="0"><stop stop-color="#cdd5c7"/><stop offset=".4" stop-color="#fffef5"/><stop offset="1" stop-color="#d8ddce"/></linearGradient>
+    <linearGradient id="tape" x2="1" y2=".6"><stop stop-color="#f3d99a"/><stop offset="1" stop-color="#c7a464"/></linearGradient>
+    <linearGradient id="roller" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#d9ddcd"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <path fill="url(#bg)" d="M0 0h720v520H0z"/>
+  <path d="M0 427h720" stroke="#d8d4c9"/>
+  <ellipse cx="360" cy="420" rx="225" ry="20" fill="#525642" opacity=".15" filter="url(#shadow)"/>
+  <g transform="rotate(15 223 280)">
+    <path d="M187 171h72v216h-72z" fill="url(#white)" stroke="#b6bfb0" stroke-width="2"/>
+    <ellipse cx="223" cy="386" rx="36" ry="8" fill="#e5e9dc" stroke="#aebaa6" stroke-width="2"/>
+    <ellipse cx="223" cy="171" rx="36" ry="8" fill="#eef0e5" stroke="#bac3b1" stroke-width="2"/>
+    <path d="M211 171v-33l12-66 12 66v33z" fill="url(#white)" stroke="#b6bfb0" stroke-width="2"/>
+    <path d="M187 216h72v116h-72z" fill="#d3ab35"/>
+    <path d="M187 314h72v18h-72z" fill="#405740"/>
+    <text x="223" y="278" fill="#35492f" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" transform="rotate(-90 223 278)">SEALANT</text>
+    <path d="M199 351h48m-48 8h48m-48 8h35" stroke="#b5bfa9" stroke-width="3"/>
+  </g>
+  <path d="M385 157h150q27 0 27 27v42h-89v101" fill="none" stroke="#839180" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M473 323v75" stroke="#354a35" stroke-width="28" stroke-linecap="round"/>
+  <path d="M473 339v48" stroke="#d1a637" stroke-width="20" stroke-linecap="round"/>
+  <path d="M379 128h131q18 0 18 29t-18 29H379q-18 0-18-29t18-29z" fill="url(#roller)" stroke="#bcc6b2" stroke-width="2"/>
+  <ellipse cx="379" cy="157" rx="18" ry="29" fill="#e6eadc" stroke="#b6c2ab" stroke-width="2"/>
+  <path d="M394 137h111m-111 10h111m-111 10h111m-111 10h111m-111 10h111" stroke="#fdfdf5" stroke-width="2" opacity=".7"/>
+  <path d="M314 344q0-47 74-47t74 47v45q0 47-74 47t-74-47z" fill="url(#tape)" stroke="#bb9b61" stroke-width="2"/>
+  <ellipse cx="388" cy="344" rx="74" ry="47" fill="#ecd29b" stroke="#c3a46a" stroke-width="2"/>
+  <ellipse cx="388" cy="344" rx="42" ry="26" fill="#a68b63"/>
+  <path d="M346 344q0 26 42 26t42-26v22q-14 21-42 21t-42-21z" fill="#f2ede0"/>
+  <ellipse cx="388" cy="344" rx="42" ry="26" fill="none" stroke="#fff5d6" stroke-width="4"/>
+  <path d="M319 389q55 31 116 3l36 25-19 17-35-22" fill="url(#tape)" stroke="#bb9b61" stroke-width="2"/>
+</svg>

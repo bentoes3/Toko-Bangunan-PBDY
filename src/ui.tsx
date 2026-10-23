@@ -161,6 +161,11 @@ export function Quantity({
     </div>
   );
 }
+export function isGroupIllustration(image: string) {
+  return ["papan-furnitur", "perakitan-kayu", "finishing-kayu", "perbaikan-rumah"]
+    .some((name) => image === `/images/${name}.svg`);
+}
+
 export function ProductCard({
   p,
   onDetail,
@@ -169,6 +174,8 @@ export function ProductCard({
   onDetail: (p: Product) => void;
 }) {
   const { add } = useStore();
+  const illustration = isGroupIllustration(p.image);
+  const badge = p.badge || (illustration ? "Ilustrasi" : "");
   return (
     <motion.article layout className="product-card">
       <button
@@ -178,14 +185,14 @@ export function ProductCard({
       >
         <img
           src={p.image}
-          alt={p.name}
+          alt={illustration ? `Ilustrasi kelompok ${p.category} untuk ${p.name}` : p.name}
           loading="lazy"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = "/images/material-default.svg";
           }}
         />
-        {p.badge && <span className="product-badge">{p.badge}</span>}
+        {badge && <span className="product-badge">{badge}</span>}
         <span className="photo-open">
           <ArrowUpRight size={18} />
         </span>

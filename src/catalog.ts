@@ -1,4 +1,5 @@
 import type { Product } from "./domain";
+import { diyDemoProducts } from "./diy-catalog";
 
 // Katalog simulasi untuk demonstrasi. Harga, stok, berat, dan volume adalah
 // contoh operasional, bukan ketersediaan atau penawaran resmi toko.
@@ -223,8 +224,17 @@ export const expandedDemoProducts: Product[] = [
  * every saved value, including edits, inactive state and zero stock.
  */
 export function appendMissingCatalogProducts(saved: Product[]): Product[] {
+  return appendUniqueProducts(saved, expandedDemoProducts);
+}
+
+/** Version 3 only adds DIY products, preserving deletions from earlier versions. */
+export function appendDiyCatalogProducts(saved: Product[]): Product[] {
+  return appendUniqueProducts(saved, diyDemoProducts);
+}
+
+function appendUniqueProducts(saved: Product[], expansion: Product[]): Product[] {
   const existingIds = new Set(saved.map((product) => product.id));
-  const additions = expandedDemoProducts.filter((product) => !existingIds.has(product.id));
+  const additions = expansion.filter((product) => !existingIds.has(product.id));
   if (!additions.length) return saved;
   return [
     ...saved,

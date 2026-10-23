@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="520" viewBox="0 0 720 520" role="img" aria-labelledby="title desc">
+  <title id="title">Ilustrasi bahan perakitan kayu</title>
+  <desc id="desc">Lem kayu, engsel logam terbuka, dan sekrup untuk merakit lemari atau perabot.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#faf8f2"/><stop offset="1" stop-color="#e9e6dc"/></linearGradient>
+    <linearGradient id="bottle" x2="1" y2=".2"><stop stop-color="#dce0d5"/><stop offset=".35" stop-color="#fffef5"/><stop offset="1" stop-color="#d5d8cc"/></linearGradient>
+    <linearGradient id="metal" x2=".4" y2="1"><stop stop-color="#e1e4df"/><stop offset=".4" stop-color="#a5b0a7"/><stop offset=".7" stop-color="#e1e6df"/><stop offset="1" stop-color="#7e8c82"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <path fill="url(#bg)" d="M0 0h720v520H0z"/>
+  <path d="M0 427h720" stroke="#d8d4c9"/>
+  <ellipse cx="355" cy="418" rx="220" ry="19" fill="#4d503e" opacity=".16" filter="url(#shadow)"/>
+  <path d="M156 193q0-17 18-25l12-22h80l12 22q18 8 18 25v190q0 20-20 20H176q-20 0-20-20z" fill="url(#bottle)" stroke="#b6beb0" stroke-width="2"/>
+  <path d="M186 145v-33h80v33" fill="#405740"/>
+  <path d="M213 112V76l13-24 13 24v36" fill="#d4a52d"/>
+  <path d="M191 119v20m10-20v20m50-20v20m10-20v20" stroke="#72866b" stroke-width="3"/>
+  <path d="M157 221h138v122H157z" fill="#d6ae3d"/>
+  <path d="M157 319h138v24H157z" fill="#405740"/>
+  <text x="226" y="262" fill="#344931" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="700">LEM</text>
+  <text x="226" y="289" fill="#344931" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="700">KAYU</text>
+  <path d="m185 370 20 8 20-8 20 8 20-8" fill="none" stroke="#b9c1ae" stroke-width="3"/>
+  <g transform="rotate(-12 456 260)">
+    <path d="M351 177h91v169h-91q-8 0-8-8V185q0-8 8-8zM459 177h91q8 0 8 8v153q0 8-8 8h-91z" fill="url(#metal)" stroke="#8c988e" stroke-width="2"/>
+    <path d="M442 174h17v175h-17z" fill="#74877b"/>
+    <path d="M444 181h13v47h-13zM444 282h13v58h-13z" fill="#c5cfc3"/>
+    <g fill="#67796a" stroke="#e1e7da" stroke-width="3"><circle cx="369" cy="205" r="10"/><circle cx="369" cy="318" r="10"/><circle cx="414" cy="261" r="10"/><circle cx="531" cy="205" r="10"/><circle cx="531" cy="318" r="10"/><circle cx="485" cy="261" r="10"/></g>
+  </g>
+  <g transform="translate(374 385) rotate(-22)" fill="url(#metal)" stroke="#7a877d" stroke-width="2">
+    <path d="M0-13h31v19H0zM9 6h13v72l-7 16-6-16z"/>
+    <path d="M6-4h19M8 21l16 6M8 35l16 6M8 49l16 6M8 63l16 6" fill="none"/>
+  </g>
+  <g transform="translate(472 370) rotate(29)" fill="url(#metal)" stroke="#7a877d" stroke-width="2">
+    <path d="M0-13h31v19H0zM9 6h13v72l-7 16-6-16z"/>
+    <path d="M6-4h19M15-10V2M8 21l16 6M8 35l16 6M8 49l16 6M8 63l16 6" fill="none"/>
+  </g>
+</svg>

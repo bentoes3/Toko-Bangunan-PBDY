@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="520" viewBox="0 0 720 520" role="img" aria-labelledby="title desc">
+  <title id="title">Ilustrasi papan kayu dan multipleks untuk furnitur</title>
+  <desc id="desc">Tumpukan lembar multipleks dan tiga papan kayu berwarna alami dengan serat kayu yang terlihat.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#faf8f2"/><stop offset="1" stop-color="#e9e6dc"/></linearGradient>
+    <linearGradient id="wood" x2=".2" y2="1"><stop stop-color="#e2bd83"/><stop offset="1" stop-color="#c58a4d"/></linearGradient>
+    <linearGradient id="plank" x2="0" y2="1"><stop stop-color="#edcd98"/><stop offset="1" stop-color="#d19b61"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="11"/></filter>
+  </defs>
+  <path fill="url(#bg)" d="M0 0h720v520H0z"/>
+  <path d="M0 427h720" stroke="#d8d4c9"/>
+  <ellipse cx="360" cy="419" rx="230" ry="21" fill="#564c37" opacity=".17" filter="url(#shadow)"/>
+  <path d="m116 322 322 81 173-169-318-69z" fill="#bb8750"/>
+  <path d="m116 322 322 81v22l-322-83z" fill="#9c693c"/>
+  <path d="m438 403 173-169v22L438 425z" fill="#b17c46"/>
+  <path d="m116 327 322 81m-322-75 322 81m0-6 173-168m-173 174 173-168" fill="none" stroke="#ead4ad" stroke-width="2" opacity=".8"/>
+  <path d="m124 291 321 80 165-160-318-71z" fill="url(#wood)"/>
+  <path d="m124 291 321 80v20l-321-80z" fill="#b27d47"/>
+  <path d="m445 371 165-160v20L445 391z" fill="#c18f56"/>
+  <path d="m124 297 321 80 165-160m-486 87 321 80 165-160" fill="none" stroke="#f0d9b0" stroke-width="2"/>
+  <g fill="none" stroke="#ac753d" stroke-width="2" opacity=".5">
+    <path d="m191 276 256 62 118-116M221 248l225 54 92-90M258 215l190 45 60-58"/>
+    <path d="M339 288c-40-35 43-44 75-15s-37 38-75 15zM353 283c-13-11 15-13 27-3s-17 13-27 3z"/>
+  </g>
+  <g transform="translate(0 -12)">
+    <path d="m164 210 63-66 299 68-63 68z" fill="url(#plank)"/>
+    <path d="m164 210 299 70v21l-299-71z" fill="#b7824b"/>
+    <path d="m463 280 63-68v21l-63 68z" fill="#9d693e"/>
+    <path d="m211 158 296 68m-310-53 296 68m-309-52 296 68" fill="none" stroke="#a8723d" opacity=".55" stroke-width="2"/>
+    <path d="m200 170 59-65 299 68-59 66z" fill="url(#plank)"/>
+    <path d="m200 170 299 69v21l-299-70z" fill="#b27a44"/>
+    <path d="m499 239 59-66v21l-59 66z" fill="#996239"/>
+    <path d="m245 117 297 68m-311-52 296 68m-309-52 295 68" fill="none" stroke="#ac783f" opacity=".5" stroke-width="2"/>
+    <path d="M353 155c-23-21 30-28 51-10s-29 28-51 10z" fill="none" stroke="#a9723c" stroke-width="2" opacity=".7"/>
+  </g>
+</svg>

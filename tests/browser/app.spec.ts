@@ -3,6 +3,7 @@ import { readFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { initialProducts, initialOrders } from "../../src/data";
 import { expandedDemoProducts } from "../../src/catalog";
+import { diyDemoProducts } from "../../src/diy-catalog";
 import type { AIStreamEvent, Identification } from "../../src/ai-types";
 
 // These raster fixtures and mocked responses test UI contracts, not recognition accuracy.
@@ -515,7 +516,7 @@ test("empty material cannot be purchased and received restock changes empty to s
 });
 
 test("catalog migration preserves saved edits, zero stock, inactive products and orders", async ({ page }) => {
-  const expansionIds = new Set(expandedDemoProducts.map((p) => p.id));
+  const expansionIds = new Set([...expandedDemoProducts, ...diyDemoProducts].map((p) => p.id));
   const original = initialProducts.filter((p) => !expansionIds.has(p.id) && p.id !== "semen-tiga");
   const edited = { ...original[0], name: "Semen Gresik Pilihan Toko", price: 71000, stock: 0, safety: 8, active: false };
   const custom = { ...original[0], id: "custom-retained", sku: "CUSTOM-001", name: "Material Tambahan Pemilik", stock: 7 };
@@ -526,6 +527,7 @@ test("catalog migration preserves saved edits, zero stock, inactive products and
     localStorage.setItem("pbdy-v1-products", JSON.stringify(products));
     localStorage.setItem("pbdy-v1-orders", JSON.stringify(orders));
     localStorage.removeItem("pbdy-catalog-v2");
+    localStorage.removeItem("pbdy-catalog-v3");
     localStorage.setItem("migration-fixture-seeded", "1");
   }, { products: savedProducts, orders: savedOrders });
   await page.goto("/#/katalog");
@@ -533,10 +535,12 @@ test("catalog migration preserves saved edits, zero stock, inactive products and
     products: JSON.parse(localStorage.getItem("pbdy-v1-products")!),
     orders: JSON.parse(localStorage.getItem("pbdy-v1-orders")!),
     migrated: localStorage.getItem("pbdy-catalog-v2"),
+    migratedDiy: localStorage.getItem("pbdy-catalog-v3"),
   }));
   const first = await readSaved();
   expect(first.migrated).toBe("1");
-  expect(first.products).toHaveLength(savedProducts.length + expandedDemoProducts.length);
+  expect(first.migratedDiy).toBe("1");
+  expect(first.products).toHaveLength(savedProducts.length + expandedDemoProducts.length + diyDemoProducts.length);
   expect(first.products.slice(0, savedProducts.length)).toEqual(savedProducts);
   expect(first.products.some((p: { id: string }) => p.id === "semen-tiga")).toBe(false);
   expect(first.orders).toEqual(savedOrders);

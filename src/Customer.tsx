@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useStore } from "./store";
-import { Modal, ProductCard, Tag, Empty, Quantity, Notice } from "./ui";
+import { Modal, ProductCard, Tag, Empty, Quantity, Notice, isGroupIllustration } from "./ui";
 import {
   money,
   totals,
@@ -485,7 +485,7 @@ export function ProductDetail({
   return (
     <Modal title="Detail Material" onClose={onClose} wide>
       <div className="detail-grid">
-        <img className="detail-photo" src={p.image} alt={p.name} />
+        <img className="detail-photo" src={p.image} alt={isGroupIllustration(p.image) ? `Ilustrasi kelompok ${p.category} untuk ${p.name}` : p.name} />
         <div>
           <Tag tone="yellow">{p.category}</Tag>
           <h2>{p.name}</h2>
@@ -496,6 +496,7 @@ export function ProductDetail({
             {money(p.price * factor)} <small>/ {unit}</small>
           </h2>
           <p>{p.description}</p>
+          {isGroupIllustration(p.image) && <p className="small muted">Gambar merupakan ilustrasi kelompok produk. Cocokkan barang dari nama, ukuran, dan spesifikasinya.</p>}
           <div className="stock">
             <span className={"dot stock-" + stockStatus(current).id} />
             {current.stock <= 0 ? "Stok habis" : `Stok: ${current.stock} ${p.unit}`}

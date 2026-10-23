@@ -1,5 +1,6 @@
 import type { Product, Supplier, Order } from "./domain";
 import { expandedDemoProducts } from "./catalog";
+import { diyDemoProducts } from "./diy-catalog";
 // Data simulasi: 12 produk awal tetap memakai nilai dan stok sebelumnya.
 export const initialProducts: Product[] = [
   {
@@ -266,6 +267,7 @@ export const initialProducts: Product[] = [
     active: true,
   },
   ...expandedDemoProducts,
+  ...diyDemoProducts,
 ];
 export const initialSuppliers: Supplier[] = [
   {
@@ -283,7 +285,7 @@ export const initialSuppliers: Supplier[] = [
     contact: "Pak Hendra",
     phone: "0813-8812-7755",
     term: 14,
-    categories: "Besi & Baja, Peralatan, Atap & Talang, Listrik, Alat Pelindung",
+    categories: "Besi & Baja, Peralatan, Atap & Talang, Listrik, Alat Pelindung, Paku & Sekrup",
     address: "Jl. Raya Bogor Km. 42, Bogor",
   },
   {
@@ -292,7 +294,7 @@ export const initialSuppliers: Supplier[] = [
     contact: "Pak Agus",
     phone: "0857-2211-8899",
     term: 7,
-    categories: "Pasir & Batu, Pipa & Fitting, Bata & Blok, Kayu & Papan, Sanitasi",
+    categories: "Pasir & Batu, Pipa & Fitting, Bata & Blok, Kayu & Papan, Sanitasi, Hardware Furnitur",
     address: "Jl. Alternatif Sentul No. 12, Bogor",
   },
 ];

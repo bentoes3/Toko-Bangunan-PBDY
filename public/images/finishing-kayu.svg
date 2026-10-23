@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="520" viewBox="0 0 720 520" role="img" aria-labelledby="title desc">
+  <title id="title">Ilustrasi perlengkapan finishing kayu</title>
+  <desc id="desc">Kaleng pelapis kayu, kuas lebar, dan papan dengan serat kayu yang dipoles.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#faf8f2"/><stop offset="1" stop-color="#e9e6dc"/></linearGradient>
+    <linearGradient id="metal" x2="1" y2="0"><stop stop-color="#adb4aa"/><stop offset=".35" stop-color="#eef0e7"/><stop offset=".75" stop-color="#cbd0c3"/><stop offset="1" stop-color="#919d8f"/></linearGradient>
+    <linearGradient id="wood" x2="1" y2=".6"><stop stop-color="#daa764"/><stop offset=".45" stop-color="#bd7c38"/><stop offset="1" stop-color="#9b5b2a"/></linearGradient>
+    <linearGradient id="bristle" x2="0" y2="1"><stop stop-color="#a97f46"/><stop offset=".65" stop-color="#d2b486"/><stop offset="1" stop-color="#ecd5ad"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <path fill="url(#bg)" d="M0 0h720v520H0z"/>
+  <path d="M0 427h720" stroke="#d8d4c9"/>
+  <ellipse cx="355" cy="417" rx="228" ry="20" fill="#65503c" opacity=".16" filter="url(#shadow)"/>
+  <path d="m344 279 161-125 138 211-166 83z" fill="#93602e"/>
+  <path d="m344 268 161-125 138 211-166 83z" fill="url(#wood)"/>
+  <g fill="none" stroke="#874e24" stroke-width="3" opacity=".55">
+    <path d="m366 267 109-84 137 180m-226-90 88-67 125 164m-194-80 58-44 112 147m-157-65 38-29 87 113"/>
+    <path d="M483 295c-35-57-11-71 15-24s30 78 8 51c-8-10-16-22-23-27z"/>
+  </g>
+  <path d="m359 264 138-105 19 30-139 100z" fill="#fff2c6" opacity=".18"/>
+  <path d="M138 204h202v177q0 29-101 29t-101-29z" fill="url(#metal)" stroke="#98a28f" stroke-width="2"/>
+  <path d="M140 237h198v125H140z" fill="#496044"/>
+  <path d="M140 330h198v32H140z" fill="#d7b34a"/>
+  <ellipse cx="239" cy="205" rx="101" ry="24" fill="#e2e5d9" stroke="#9ca78f" stroke-width="3"/>
+  <ellipse cx="239" cy="205" rx="86" ry="16" fill="#b3bca6"/>
+  <ellipse cx="239" cy="205" rx="78" ry="11" fill="#d0d7c5"/>
+  <text x="239" y="282" fill="#fffbea" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="700">FINISHING</text>
+  <text x="239" y="311" fill="#fffbea" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="700">KAYU</text>
+  <path d="M155 224c-28-137 195-137 168 0" fill="none" stroke="#8b9783" stroke-width="5"/>
+  <g transform="rotate(28 397 260)">
+    <path d="M377 126q20-24 40 0l-5 115h-30z" fill="#d9b13d" stroke="#b78c26" stroke-width="2"/>
+    <circle cx="397" cy="135" r="7" fill="#f1e8cd"/>
+    <path d="m382 238-23 16v53h76v-53l-23-16z" fill="url(#metal)" stroke="#8b9687" stroke-width="2"/>
+    <path d="M359 305h76v71l-76 8z" fill="url(#bristle)"/>
+    <path d="M366 310v69m9-69v68m9-68v67m9-67v66m9-66v65m9-65v64m9-64v63m8-63v62" fill="none" stroke="#a98b5d" opacity=".65" stroke-width="2"/>
+    <path d="M359 263h76m-76 35h76" stroke="#7d8b7d" stroke-width="2"/>
+  </g>
+</svg>

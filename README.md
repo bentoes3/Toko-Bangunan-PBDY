@@ -30,7 +30,7 @@ Server Vite biasa hanya menjalankan frontend; AI akan menampilkan status belum t
 
 - Customer: halaman utama, katalog (`#/katalog`), keranjang (`#/keranjang`), checkout (`#/checkout`), dan pesanan (`#/pesanan`).
 - Portal admin: `#/admin`. Username **admin_pbdy**, password **adminpassword123**, atau tombol **Gunakan akun demo**.
-- Data awal: 52 produk dalam 15 kategori, 3 supplier, 4 pesanan contoh, serta riwayat penjualan ilustratif. Material mencakup pondasi, dinding, struktur, atap, plafon, sanitasi, listrik, finishing, peralatan dan alat pelindung.
+- Data awal: 97 produk dalam 17 kategori, 3 supplier, 4 pesanan contoh, serta riwayat penjualan ilustratif. Selain material bangunan, katalog mencakup papan furnitur, multipleks berbagai ketebalan, lem kayu, hardware furnitur, perkakas perakitan, finishing kayu, dan perlengkapan perbaikan rumah sederhana.
 - Semua nominal dalam Rupiah. Semua gambar produk merupakan ilustrasi placeholder material, bukan foto kemasan resmi. Warna dan identitas visual terinspirasi logo PB.DY.
 
 Alur uji yang disarankan:
@@ -51,6 +51,8 @@ Untuk mengembalikan data contoh: hapus penyimpanan situs melalui DevTools → Ap
 
 Pembaruan katalog v2 menambahkan 40 produk sekali saja pada browser lama. Edit produk, stok, keranjang, pesanan dan riwayat yang tersimpan dipertahankan. Produk awal yang dihapus tidak dikembalikan. Status inventaris: **Aman** (hijau, stok > batas aman), **Perlu restock** (kuning, 0 < stok ≤ batas aman), **Kosong** (merah, stok ≤ 0). Inventaris dikelompokkan per jenis material dengan kolom Satuan tersendiri. Harga dan stok baru merupakan data contoh, bukan daftar harga atau stok toko yang diverifikasi.
 
+Pembaruan katalog v3 menambahkan 45 produk untuk proyek rumahan: membuat lemari/rak/meja kecil, merakit furnitur, melapisi ulang kayu, menambal dinding dan memperbaiki celah basah. Migrasi v3 hanya menambah ID produk DIY baru; produk versi sebelumnya yang telah dihapus tidak dimunculkan lagi, dan perubahan pemilik pada produk yang sudah ada tetap dipertahankan. Katalog baru juga dipakai konsultan AI, termasuk ketika percakapan lama menyebut bahan tersebut belum tersedia. Ukuran lembar, ketebalan, isi kemasan, dan satuan dicantumkan pada detail produk; bahan furnitur dan cat tembok tetap dibedakan.
+
 ### Konsultan, pencarian foto, dan kalkulator
 
 - **Konsultan Rena:** model multimodal `@cf/google/gemma-4-26b-a4b-it` melalui binding server Workers AI. Jawaban SSE muncul bertahap, dengan stop/retry dan konteks maksimal 12 pesan/18.000 karakter serta dua foto terbaru. Teks percakapan tersimpan dalam sesi browser; foto hanya berada di memori dan tidak disimpan dalam riwayat. Rekomendasi produk divalidasi ke ID katalog aktif; pengguna memilih produk, satuan, dan jumlah sebelum menekan tambah ke keranjang. Bahan tak dijual tetap dijelaskan untuk dicari di toko lain; stok habis dibedakan dari produk tak dijual. Kesesuaian fungsi bahan dan ukuran harus diperiksa kembali.
@@ -69,6 +71,7 @@ Analitik menjumlahkan riwayat omzet contoh dan transaksi demo saat ini. Margin k
 ## Struktur
 
 - `src/domain.ts`: konversi, validasi stok, armada, kalkulator, forecasting.
+- `src/catalog.ts`, `src/diy-catalog.ts`: tambahan katalog simulasi dan migrasi versi tanpa menimpa data pemilik.
 - `src/store.tsx`: state bersama dan persistensi.
 - `src/Customer.tsx`: storefront, katalog, checkout, pelacakan.
 - `src/AI.tsx`, `src/ai-client.ts`: konsultan streaming, rekomendasi belanja dan crop/pengenalan foto.

@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { initialProducts, initialSuppliers, initialOrders } from "./data";
-import { appendMissingCatalogProducts } from "./catalog";
+import { appendMissingCatalogProducts, appendDiyCatalogProducts } from "./catalog";
 import {
   conversion,
   validateCart,
@@ -21,14 +21,22 @@ function useSaved<T>(key: string, initial: T) {
   const [value, set] = useState<T>(() => {
     try {
       const s = localStorage.getItem("pbdy-v1-" + key);
-      if (key === "products" && !localStorage.getItem("pbdy-catalog-v2")) {
-        const next = s ? appendMissingCatalogProducts(JSON.parse(s)) : initial;
-        // Save products before the marker so interrupted writes can be retried safely.
-        try {
-          localStorage.setItem("pbdy-v1-" + key, JSON.stringify(next));
-          localStorage.setItem("pbdy-catalog-v2", "1");
-        } catch {
-          console.warn("Katalog diperbarui di memori; penyimpanan browser tidak tersedia.");
+      if (key === "products") {
+        let next = (s ? JSON.parse(s) : initial) as Product[];
+        const migrations = [
+          ["pbdy-catalog-v2", appendMissingCatalogProducts],
+          ["pbdy-catalog-v3", appendDiyCatalogProducts],
+        ] as const;
+        for (const [marker, migrate] of migrations) {
+          if (localStorage.getItem(marker)) continue;
+          next = migrate(next);
+          // Save products before each marker; interrupted writes retry without duplicates.
+          try {
+            localStorage.setItem("pbdy-v1-" + key, JSON.stringify(next));
+            localStorage.setItem(marker, "1");
+          } catch {
+            console.warn("Katalog diperbarui di memori; penyimpanan browser tidak tersedia.");
+          }
         }
         return next as T;
       }
