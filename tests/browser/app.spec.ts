@@ -3,6 +3,16 @@ import { readFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { initialProducts, initialOrders } from "../../src/data";
 import { expandedDemoProducts } from "../../src/catalog";
+import type { AIStreamEvent, Identification } from "../../src/ai-types";
+
+// These raster fixtures and mocked responses test UI contracts, not recognition accuracy.
+const pngFixture = () => ({
+  name: "fixture.png", mimeType: "image/png",
+  buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4f0Lj/wkNBggFADmOB73MmqQgAAAAAElFTkSuQmCC", "base64"),
+});
+const streamFixture = (events: AIStreamEvent[]) => events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("");
+const readyAI = async (page: Page) => page.route("**/api/ai/status", (route) => route.fulfill({ json: { ready: true } }));
+const savedCart = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem("pbdy-v1-cart") || "[]"));
 const login = async (page: Page) => {
   await page.goto("/#/admin");
   await page.getByRole("button", { name: "Gunakan akun demo" }).click();
@@ -107,55 +117,202 @@ test("customer tracking updates live when admin changes the same order in anothe
     "Material telah diterima.",
   );
 });
-test("visual search uses uploaded image, crop selection, mock category, and cart", async ({
-  page,
-}) => {
+test("visual search submits a cropped raster to the API and renders identified catalog options", async ({ page }) => {
+  await readyAI(page);
+  let requestBody: { image: string; catalog: { id: string }[] } | undefined;
+  await page.route("**/api/ai/identify", async (route) => {
+    requestBody = route.request().postDataJSON();
+    await route.fulfill({ json: {
+      status: "identified", name: "Elbow PVC 90 derajat", confidence: "medium",
+      description: "Sambungan bersudut untuk jalur pipa. Ukuran perlu diperiksa langsung.",
+      observations: ["Bentuk siku dengan dua ujung terbuka."], questions: ["Berapa diameter sambungannya?"], productIds: ["fitting"],
+    } satisfies Identification });
+  });
   await page.goto("/");
   await page.getByRole("button", { name: "Coba Cari via Foto" }).click();
-  await page
-    .getByLabel("Pilih foto material")
-    .setInputFiles("public/images/fitting.svg");
+  const dialog = page.getByRole("dialog", { name: "Cari material lewat foto" });
+  await page.getByLabel("Pilih foto material").setInputFiles(pngFixture());
   await expect(page.locator(".crop-box")).toBeVisible();
-  await page.locator(".crop-controls input").first().fill("10");
-  await page.getByRole("button", { name: "Cari dari Area Terpilih" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Hasil pencocokan: Pipa & Fitting" }),
-  ).toBeVisible();
-  await expect(page.getByAltText("Hasil potongan area terpilih")).toBeVisible();
-  await page
-    .getByRole("button", {
-      name: "Tambah Elbow PVC Rucika ½ inci",
-      exact: true,
-    })
-    .click();
-  await expect(page.getByRole("status")).toContainText("ditambahkan");
+  expect(requestBody).toBeUndefined();
+  await page.locator(".crop-controls").getByLabel("Lebar", { exact: true }).fill("60");
+  await page.locator(".crop-controls").getByLabel("Posisi X", { exact: true }).fill("10");
+  await dialog.getByRole("button", { name: "Kenali objek", exact: true }).click();
+  await expect(dialog.getByRole("heading", { name: "Elbow PVC 90 derajat", exact: true })).toBeVisible();
+  expect(requestBody?.image).toMatch(/^data:image\/jpeg;base64,/);
+  expect(requestBody?.catalog.some((product) => product.id === "fitting")).toBe(true);
+  await expect(dialog.getByAltText("Area foto yang dianalisis")).toBeVisible();
+  await expect(dialog.getByText("Berapa diameter sambungannya?")).toBeVisible();
+  await expect(dialog.locator(".product-card")).toHaveCount(1);
+  await expect(dialog.getByRole("combobox")).toHaveCount(0);
+  expect(await savedCart(page)).toEqual([]);
+  await dialog.getByRole("button", { name: "Tambah Elbow PVC Rucika ½ inci", exact: true }).click();
+  expect(await savedCart(page)).toEqual([{ productId: "fitting", unit: "pcs", quantity: 1 }]);
+  await page.locator(".crop-controls").getByLabel("Posisi X", { exact: true }).fill("15");
+  await expect(dialog.locator(".visual-results")).toHaveCount(0);
 });
-test("renovation assistant requests dimensions, calculates, and recommends brands", async ({
-  page,
-}) => {
+
+for (const status of ["not_building", "uncertain"] as const) {
+  test("visual search " + status + " shows honest feedback without guessed products or cart actions", async ({ page }) => {
+    await readyAI(page);
+    await page.route("**/api/ai/identify", (route) => route.fulfill({ json: {
+      status, name: status === "not_building" ? "Buah" : "Sambungan pipa",
+      confidence: "low", description: status === "not_building" ? "Objek ini tampak sebagai buah, bukan material atau alat bangunan." : "Detail pada foto belum cukup jelas untuk menentukan nama barang.",
+      observations: [], questions: status === "uncertain" ? ["Bisa unggah foto yang lebih dekat dan terang?"] : [],
+      productIds: ["fitting"],
+    } satisfies Identification }));
+    await page.goto("/");
+    await page.getByRole("button", { name: "Coba Cari via Foto" }).click();
+    const dialog = page.getByRole("dialog");
+    await page.getByLabel("Pilih foto material").setInputFiles(pngFixture());
+    await expect(dialog.getByAltText("Foto objek yang akan dianalisis")).toBeVisible();
+    await dialog.getByRole("button", { name: "Kenali objek", exact: true }).click();
+    await expect(dialog.getByRole("heading", { name: status === "not_building" ? "Foto ini bukan barang bangunan" : "Saya belum yakin dengan objek ini", exact: true })).toBeVisible();
+    await expect(dialog.locator(".visual-results .product-card")).toHaveCount(0);
+    await expect(dialog.locator(".visual-results").getByRole("button", { name: /Tambah/ })).toHaveCount(0);
+    await expect(dialog.locator(".visual-results")).not.toContainText("Sambungan pipa");
+    expect(await savedCart(page)).toEqual([]);
+  });
+}
+
+test("paint calculator is independent of AI and adds the selected exact 5-liter can quantity", async ({ page }) => {
+  const apiCalls: string[] = [];
+  await page.route("**/api/ai/**", (route) => { apiCalls.push(route.request().url()); return route.abort(); });
   await page.goto("/");
-  await page.getByRole("button", { name: "Buka asisten renovasi" }).click();
-  await page
-    .getByRole("textbox", { name: "Pesan untuk asisten" })
-    .fill("Saya ingin cat ulang kamar");
-  await page.getByRole("button", { name: "Kirim pesan" }).click();
-  await expect(page.locator(".chat-messages")).toContainText(
-    "Berapa panjang, lebar, dan tinggi",
-  );
-  await page.getByRole("spinbutton", { name: "Panjang (m)" }).fill("4");
-  await page.getByRole("spinbutton", { name: "Lebar (m)" }).fill("3");
-  await page.getByRole("spinbutton", { name: "Tinggi (m)" }).fill("3");
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Hitung Kebutuhan", exact: true })
-    .click();
-  await expect(page.locator(".estimate-result h2")).toContainText("2");
-  await page.getByLabel("Pilih merek").selectOption("cat-avian");
-  await page.getByRole("button", { name: "Tambah 2 kaleng" }).click();
-  const cart = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("pbdy-v1-cart")!),
-  );
-  expect(cart[0]).toMatchObject({ productId: "cat-avian", quantity: 2 });
+  await page.getByRole("button", { name: "Buka Kalkulator Cat", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Kalkulator Cat Dinding" });
+  await expect(dialog.getByRole("textbox", { name: /Pesan/ })).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Hitung Kebutuhan Cat", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText("lebih dari nol");
+  await dialog.getByLabel("Panjang ruangan (m)", { exact: true }).fill("4");
+  await dialog.getByLabel("Lebar ruangan (m)", { exact: true }).fill("3");
+  await dialog.getByLabel("Tinggi dinding (m)", { exact: true }).fill("3");
+  await dialog.getByLabel("Luas pintu dan jendela (m²)", { exact: true }).fill("6");
+  await dialog.getByRole("button", { name: "Hitung Kebutuhan Cat", exact: true }).click();
+  await expect(dialog.locator(".paint-result h2")).toContainText("2 kaleng × 5 liter");
+  await expect(dialog.locator(".paint-result")).toContainText("7,92 liter");
+  await dialog.getByLabel("Pilih cat dinding (kemasan 5 liter)", { exact: true }).selectOption("cat-avian");
+  expect(await savedCart(page)).toEqual([]);
+  await dialog.getByRole("button", { name: "Tambah 2 kaleng ke Keranjang", exact: true }).click();
+  expect(await savedCart(page)).toEqual([{ productId: "cat-avian", unit: "kaleng", quantity: 2 }]);
+  expect(apiCalls).toEqual([]);
+});
+
+test("consultant consumes SSE, sends photo and history, and adds only selected recommendations", async ({ page }) => {
+  await readyAI(page);
+  const requests: { messages: { role: string; text: string; image?: string }[]; catalog: { id: string }[] }[] = [];
+  await page.route("**/api/ai/chat", async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({ contentType: "text/event-stream", body: streamFixture(requests.length === 1 ? [
+      { type: "delta", text: "Kita mulai dari ukuran lemari. " },
+      { type: "delta", text: "Apakah lemari akan dipasang di ruang lembap?" },
+      { type: "recommendations", items: [
+        { label: "Bahan papan dan rangka", reason: "Pilih bahan sesuai bagian lemari; ukuran dan ketebalan perlu dipastikan.", options: ["multipleks", "kayu-kaso"], quantity: 1, unit: null, unavailable: false },
+        { label: "Lem kayu PVA", reason: "Untuk sambungan kayu; pilih lem khusus kayu.", options: [], quantity: null, unit: null, unavailable: true },
+      ] },
+      { type: "done" },
+    ] : [
+      { type: "delta", text: "Untuk ukuran tinggi 180 cm di ruang kering, kita lanjutkan dengan gambar potongan dan jumlah rak." },
+      { type: "recommendations", items: [] }, { type: "done" },
+    ]) });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Buka konsultan bangunan AI", exact: true }).click();
+  let dialog = page.getByRole("dialog", { name: "Konsultan AI bangunan" });
+  await expect(dialog.getByRole("button", { name: /Hitung Kebutuhan/ })).toHaveCount(0);
+  await dialog.getByLabel("Lampirkan foto proyek", { exact: true }).setInputFiles(pngFixture());
+  await expect(dialog.getByAltText("Foto yang akan dikirim bersama pesan")).toBeVisible();
+  await dialog.getByRole("textbox", { name: "Pesan untuk konsultan AI", exact: true }).fill("Bantu saya membuat lemari seperti foto ini.");
+  await dialog.getByRole("button", { name: "Kirim pesan", exact: true }).click();
+  await expect(dialog.getByRole("log")).toContainText("Kita mulai dari ukuran lemari. Apakah lemari akan dipasang di ruang lembap?");
+  expect(requests[0].messages.at(-1)).toMatchObject({ role: "user", text: "Bantu saya membuat lemari seperti foto ini." });
+  expect(requests[0].messages.at(-1)?.image).toMatch(/^data:image\/jpeg;base64,/);
+  expect(requests[0].catalog.some((product) => product.id === "multipleks")).toBe(true);
+  const material = dialog.locator(".ai-recommendation").filter({ hasText: "Bahan papan dan rangka" });
+  const unavailable = dialog.locator(".ai-recommendation").filter({ hasText: "Lem kayu PVA" });
+  await expect(unavailable).toContainText("Tidak tersedia di toko");
+  await expect(unavailable).toContainText("toko lain");
+  await expect(unavailable.getByRole("button")).toHaveCount(0);
+  expect(await savedCart(page)).toEqual([]);
+  await material.getByLabel("Pilih produk", { exact: true }).selectOption("kayu-kaso");
+  await material.getByLabel("Jumlah", { exact: true }).fill("2");
+  await expect(material.getByLabel("Satuan", { exact: true })).toHaveValue("batang");
+  await material.getByRole("button", { name: /^Tambah ke keranjang/ }).click();
+  expect(await savedCart(page)).toEqual([{ productId: "kayu-kaso", unit: "batang", quantity: 2 }]);
+  await dialog.getByRole("textbox", { name: "Pesan untuk konsultan AI", exact: true }).fill("Tingginya 180 cm dan ruangan kering.");
+  await dialog.getByRole("button", { name: "Kirim pesan", exact: true }).click();
+  await expect(dialog.getByRole("log")).toContainText("gambar potongan dan jumlah rak");
+  expect(requests[1].messages.map((message) => message.text)).toEqual(expect.arrayContaining([
+    "Bantu saya membuat lemari seperti foto ini.",
+    "Kita mulai dari ukuran lemari. Apakah lemari akan dipasang di ruang lembap?",
+    "Tingginya 180 cm dan ruangan kering.",
+  ]));
+  const savedHistory = await page.evaluate(() => sessionStorage.getItem("pbdy-ai-conversation-v1"));
+  expect(savedHistory).toContain("Tingginya 180 cm");
+  expect(savedHistory).not.toContain("data:image/");
+  await dialog.getByRole("button", { name: "Tutup", exact: true }).click();
+  await page.getByRole("button", { name: "Buka konsultan bangunan AI", exact: true }).click();
+  dialog = page.getByRole("dialog", { name: "Konsultan AI bangunan" });
+  await expect(dialog.getByRole("log")).toContainText("gambar potongan dan jumlah rak");
+  await dialog.getByRole("button", { name: "Mulai percakapan baru", exact: true }).click();
+  await expect(dialog.getByRole("log")).not.toContainText("Tingginya 180 cm");
+  expect(await savedCart(page)).toEqual([{ productId: "kayu-kaso", unit: "batang", quantity: 2 }]);
+});
+
+test("consultant can stop a pending response and send a new message", async ({ page }) => {
+  await readyAI(page);
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  let requests = 0;
+  await page.route("**/api/ai/chat", async (route) => {
+    const currentRequest = ++requests;
+    if (currentRequest === 1) await pending;
+    try {
+      await route.fulfill({ contentType: "text/event-stream", body: streamFixture([
+        { type: "delta", text: "Mari lanjutkan membahas kebutuhan proyek Anda." }, { type: "done" },
+      ]) });
+    } catch (error) {
+      // The first fetch is explicitly canceled by the user in this test.
+      if (currentRequest !== 1) throw error;
+    }
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Buka konsultan bangunan AI", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox", { name: "Pesan untuk konsultan AI" }).fill("Bahan apa untuk membuat rak?");
+  await dialog.getByRole("button", { name: "Kirim pesan", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: "Hentikan jawaban", exact: true })).toBeVisible();
+  await expect.poll(() => requests).toBe(1);
+  await dialog.getByRole("button", { name: "Hentikan jawaban", exact: true }).click();
+  await expect(dialog.getByRole("log")).toContainText("Jawaban dihentikan.");
+  release();
+  await dialog.getByRole("textbox", { name: "Pesan untuk konsultan AI" }).fill("Saya ingin rak kecil dari kayu.");
+  await dialog.getByRole("button", { name: "Kirim pesan", exact: true }).click();
+  await expect(dialog.getByRole("log")).toContainText("Mari lanjutkan membahas kebutuhan proyek Anda.");
+  expect(requests).toBe(2);
+});
+
+test("consultant shows API failures, preserves the draft and retries without duplicate user turns", async ({ page }) => {
+  await readyAI(page);
+  let requests = 0;
+  await page.route("**/api/ai/chat", (route) => ++requests === 1
+    ? route.fulfill({ status: 503, json: { error: "Layanan AI sedang tidak tersedia. Silakan coba lagi." } })
+    : route.fulfill({ contentType: "text/event-stream", body: streamFixture([
+      { type: "delta", text: "Kita bisa membandingkan bahan untuk rak tersebut." }, { type: "done" },
+    ]) }));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Buka konsultan bangunan AI", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  const composer = dialog.getByRole("textbox", { name: "Pesan untuk konsultan AI" });
+  await composer.fill("Saya ingin membandingkan bahan rak.");
+  await dialog.getByRole("button", { name: "Kirim pesan", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Layanan AI sedang tidak tersedia");
+  await expect(composer).toHaveValue("Saya ingin membandingkan bahan rak.");
+  expect(await savedCart(page)).toEqual([]);
+  await dialog.getByRole("button", { name: "Coba kirim lagi", exact: true }).click();
+  await expect(dialog.getByRole("log")).toContainText("Kita bisa membandingkan bahan untuk rak tersebut.");
+  await expect(dialog.locator(".chat-message.user")).toHaveCount(1);
+  await expect(dialog.getByRole("alert")).toHaveCount(0);
+  expect(requests).toBe(2);
 });
 test("invoice extraction is reviewable, confirms stock and prevents duplicate confirmation", async ({
   page,
@@ -164,7 +321,7 @@ test("invoice extraction is reviewable, confirms stock and prevents duplicate co
   await page.goto("/#/admin/invoice");
   await page
     .getByLabel("Unggah nota supplier")
-    .setInputFiles("public/images/semen.svg");
+    .setInputFiles(pngFixture());
   await page.getByRole("button", { name: "Simulasikan Ekstraksi" }).click();
   await expect(page.getByRole("textbox", { name: "Nomor nota" })).toBeVisible();
   await page

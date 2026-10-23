@@ -53,7 +53,7 @@ export function Modal({
       if (e.key === "Escape") onClose();
       if (e.key === "Tab") {
         const list = ref.current?.querySelectorAll<HTMLElement>(
-          'button,input,select,textarea,a[href],[tabindex="0"]',
+          'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex="0"]',
         );
         if (!list?.length) return;
         const first = list[0],

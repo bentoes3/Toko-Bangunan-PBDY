@@ -69,10 +69,12 @@ const categoryIcons = [
 export function Home({
   openVisual,
   openAdvisor,
+  openCalculator,
   onDetail,
 }: {
   openVisual: () => void;
   openAdvisor: () => void;
+  openCalculator: () => void;
   onDetail: (p: Product) => void;
 }) {
   const { products } = useStore();
@@ -108,8 +110,8 @@ export function Home({
             <a className="btn primary" href="#/katalog">
               Jelajahi Material <ArrowUpRight size={19} />
             </a>
-            <button className="btn white" onClick={openAdvisor}>
-              <Sparkles size={18} /> Hitung Kebutuhan
+            <button className="btn white" onClick={openCalculator}>
+              <Ruler size={18} /> Hitung Cat Dinding
             </button>
           </div>
           <div className="hero-assurance">
@@ -264,40 +266,29 @@ export function Home({
       </section>
       <section className="container renovation">
         <div>
-          <span className="eyebrow accent">RENCANA KECIL, PERUBAHAN BESAR</span>
+          <span className="eyebrow accent">TEMAN DISKUSI UNTUK PROYEK ANDA</span>
           <h2>
-            Renovasi lebih terencana.
+            Ada rencana membangun?
             <br />
-            Belanja secukupnya.
+            Mari kita bahas.
           </h2>
           <p>
-            Tak perlu menebak berapa banyak cat atau keramik yang dibutuhkan.
-            Ceritakan rencana Anda, asisten kami bantu menghitungnya.
+            Membuat lemari, memperbaiki kamar, atau memilih bahan bangunan?
+            Ceritakan rencana dan unggah foto. Rena membantu menyusun kebutuhan,
+            menawarkan pilihan dari toko, dan menyebut bahan yang perlu dicari di tempat lain.
           </p>
           <button className="btn primary" onClick={openAdvisor}>
-            Konsultasi Renovasi <Sparkles size={18} />
+            Diskusi dengan Rena <Sparkles size={18} />
           </button>
         </div>
-        <div className="renovation-note">
+        <div className="renovation-note paint-home-card">
           <span className="note-label">
-            <Sparkles size={18} /> ASISTEN RENOVASI PB.DY
+            <Ruler size={18} /> KALKULATOR TERPISAH
           </span>
-          <div className="mock-bubble">
-            Mau cat ulang ruang keluarga 4 × 3 meter 🎨
-          </div>
-          <div className="mock-answer">
-            <span className="mini-ai">
-              <Sparkles size={17} />
-            </span>
-            <div>
-              <strong>Siap, mari kita hitung!</strong>
-              <p>
-                Dengan tinggi 3 meter dan 2 lapis cat, Anda membutuhkan sekitar{" "}
-                <b>2 kaleng cat 5 liter.</b>
-              </p>
-              <small>Sudah termasuk cadangan 10% ✓</small>
-            </div>
-          </div>
+          <h3>Berapa kaleng cat yang dibutuhkan?</h3>
+          <p>Masukkan ukuran ruangan, kurangi pintu dan jendela, lalu pilih jumlah lapisan. Hasil dihitung dari rumus yang bisa Anda periksa.</p>
+          <span className="paint-home-formula">Luas dinding × lapisan ÷ daya sebar</span>
+          <button className="btn white" onClick={openCalculator}>Buka Kalkulator Cat <ArrowUpRight size={18} /></button>
         </div>
       </section>
     </>

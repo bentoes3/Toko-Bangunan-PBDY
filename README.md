@@ -22,7 +22,9 @@ npm run test:e2e  # Pengujian browser end-to-end
 
 Tes browser memilih Microsoft Edge di Windows, Chromium sistem di Linux bila tersedia, atau browser Playwright bawaan (instal dengan `npx playwright install chromium`). Override executable melalui `PLAYWRIGHT_CHROMIUM_EXECUTABLE` bila diperlukan.
 
-Deployment produksi menggunakan Cloudflare Pages **https://tokopbdy.pages.dev** (proyek `tokopbdy`, Direct Upload). Build `dist/`, lalu unggah isinya sebagai ZIP pada **Create deployment → Production**. Proyek ini tidak terhubung otomatis ke GitHub; push sumber tidak menerbitkan situs dengan sendirinya.
+Deployment produksi menggunakan Cloudflare Pages **https://tokopbdy.pages.dev** (proyek `tokopbdy`, Direct Upload). `npm run build` menghasilkan frontend, backend `_worker.js`, dan `_routes.json` yang membatasi Functions ke `/api/*`. Unggah seluruh isi `dist/` sebagai ZIP pada **Create deployment → Production**. Di **Settings → Bindings**, tambahkan **Workers AI** dengan nama **AI** untuk Production maupun Preview; binding berlaku setelah deployment berikutnya. Tidak ada API key dalam frontend. Proyek ini tidak terhubung otomatis ke GitHub; push sumber tidak menerbitkan situs dengan sendirinya.
+
+Server Vite biasa hanya menjalankan frontend; AI akan menampilkan status belum tersedia tanpa backend. Untuk integrasi lokal gunakan `npx wrangler pages dev dist --ai AI` setelah autentikasi Cloudflare, atau uji pada deployment Preview dengan binding AI. UI tidak memakai jawaban simulasi ketika backend tidak tersedia.
 
 ## Akses & alur demo
 
@@ -43,16 +45,22 @@ Alur uji yang disarankan:
 
 ## Batas simulasi dan penyimpanan
 
-Aplikasi ini berjalan sepenuhnya di browser. **Tidak memerlukan backend, database, token API, payment gateway, atau kredensial tambahan.** State disimpan di `localStorage` dengan prefix `pbdy-v1-`; sesi admin di `sessionStorage`. Pembaruan lintas tab menggunakan event `storage`. Data tidak dibagikan ke browser/perangkat lain, dan akses admin merupakan guard UI demo, bukan otentikasi server untuk produksi. Pesanan contoh terlihat bersama untuk demonstrasi.
+Katalog, keranjang, pesanan dan operasional tetap merupakan simulasi browser. State disimpan di `localStorage` dengan prefix `pbdy-v1-`; sesi admin di `sessionStorage`. Pembaruan lintas tab menggunakan event `storage`. Data operasional tidak dibagikan ke browser/perangkat lain, dan akses admin merupakan guard UI demo, bukan otentikasi server untuk produksi. Konsultan dan pengenalan foto menggunakan backend Cloudflare Pages serta inferensi Workers AI yang nyata. Snapshot katalog aktif, konteks percakapan terbatas, dan foto yang dipilih dikirim ke layanan AI saat pengguna mengirim pesan/menjalankan analisis; harga dan stok tetap mengikuti simulasi pada browser tersebut.
 
 Untuk mengembalikan data contoh: hapus penyimpanan situs melalui DevTools → Application → Local Storage, kemudian muat ulang. Tidak ada transaksi atau notifikasi eksternal yang dikirim. Draft PO diunduh, tidak dikirim otomatis ke supplier.
 
 Pembaruan katalog v2 menambahkan 40 produk sekali saja pada browser lama. Edit produk, stok, keranjang, pesanan dan riwayat yang tersimpan dipertahankan. Produk awal yang dihapus tidak dikembalikan. Status inventaris: **Aman** (hijau, stok > batas aman), **Perlu restock** (kuning, 0 < stok ≤ batas aman), **Kosong** (merah, stok ≤ 0). Inventaris dikelompokkan per jenis material dengan kolom Satuan tersendiri. Harga dan stok baru merupakan data contoh, bukan daftar harga atau stok toko yang diverifikasi.
 
-### Fitur AI simulasi
+### Konsultan, pencarian foto, dan kalkulator
 
-- **Visual Search:** menerima foto dari galeri/kamera, menyediakan drag/resize crop serta kontrol slider yang dapat dioperasikan dengan keyboard, dan benar-benar menghasilkan potongan gambar. Hasil katalog dan skor kecocokan adalah contoh berdasarkan kategori yang dipilih, bukan inferensi gambar. Opsi objek tak dikenal menyediakan pencarian manual.
-- **Rena / kalkulator renovasi:** percakapan berbasis aturan, menerima foto sebagai konteks demo, meminta ukuran, mengenali cat/keramik/tambal lantai dan menolak permintaan bangun dari tanah kosong. Foto tidak dianalisis oleh vision model. Rumus cat: luas empat dinding × 2 lapis × 1,1 / 50 m² per kaleng 5 liter; keramik: luas lantai × 1,1 / 1,44 m² per dus; tambal lantai: luas × tebal 0,03 m × densitas 1.800 kg/m³ × 1,1 / 50 kg. Pembulatan ke atas. Pasir, perekat, nat, dan kebutuhan tambahan belum termasuk.
+- **Konsultan Rena:** model multimodal `@cf/google/gemma-4-26b-a4b-it` melalui binding server Workers AI. Jawaban SSE muncul bertahap, dengan stop/retry dan konteks maksimal 12 pesan/18.000 karakter serta dua foto terbaru. Teks percakapan tersimpan dalam sesi browser; foto hanya berada di memori dan tidak disimpan dalam riwayat. Rekomendasi produk divalidasi ke ID katalog aktif; pengguna memilih produk, satuan, dan jumlah sebelum menekan tambah ke keranjang. Bahan tak dijual tetap dijelaskan untuk dicari di toko lain; stok habis dibedakan dari produk tak dijual. Kesesuaian fungsi bahan dan ukuran harus diperiksa kembali.
+- **Cari via Foto:** JPG/PNG/WebP maksimal 8 MB, diperkecil di browser hingga sisi terpanjang 1.280 px dan payload di bawah 1 MB. Seluruh foto dipilih secara default, dengan crop yang dapat diatur memakai pointer atau keyboard. Model memeriksa piksel, lalu mengembalikan nama/ciri visual dan status `identified`, `not_building`, atau `uncertain`. Tidak ada kategori contoh atau persentase kecocokan buatan. Hanya hasil teridentifikasi yang boleh menawarkan produk; foto ambigu atau bukan barang bangunan tidak mendapat kecocokan paksa. Nama merek/ukuran tidak boleh ditebak dari foto.
+- **Kalkulator Cat Dinding:** terpisah dari chat dan tidak memerlukan layanan AI. Luas bersih = 2 × (panjang + lebar) × tinggi − luas pintu/jendela. Liter = luas bersih × lapisan ÷ daya sebar × (1 + cadangan/100). Dibulatkan ke atas per kaleng 5 liter, lalu pilih cat aktif yang stoknya cukup setelah isi keranjang. Default dua lapis, 10 m²/liter/lapis, dan cadangan 10%; semua dapat diubah.
+
+Workers AI memakai kuota akun Cloudflare; [alokasi gratis dan tarif](https://developers.cloudflare.com/workers-ai/platform/pricing/) ditentukan Cloudflare. Kode tidak mengaktifkan paket berbayar. Saat model, kuota, atau jaringan gagal, UI menampilkan error dan pilihan mencoba lagi, bukan jawaban template. Endpoint memvalidasi ukuran request, signature foto, origin, dan batas konteks; rate limit memori 12 permintaan/IP/menit bersifat per-isolate, bukan jaminan batas global. Binding opsional `AI_RATE_LIMITER` dapat menambahkan batas bersama. Foto/input tidak dicatat pada log aplikasi. Tes backend/client menggunakan mock untuk protokol dan kasus gagal; pengujian inferensi nyata dilakukan pada Preview.
+
+### Fitur operasional yang tetap simulasi
+
 - **Invoice extraction:** hasil contoh tetap dengan field yang dapat dikoreksi; tidak menjalankan OCR atau LLM. Gambar tidak dikirim ke server. Konfirmasi manual wajib sebelum stok berubah.
 - **Forecast:** rata-rata penjualan contoh 30 hari × tren 1,12; rekomendasi pembelian = maksimum(0, estimasi permintaan + safety stock − stok). Data kurang dari 10 penjualan ditandai belum cukup. Seri grafik harian adalah ilustrasi berbasis rerata, bukan model ML terlatih.
 
@@ -63,7 +71,9 @@ Analitik menjumlahkan riwayat omzet contoh dan transaksi demo saat ini. Margin k
 - `src/domain.ts`: konversi, validasi stok, armada, kalkulator, forecasting.
 - `src/store.tsx`: state bersama dan persistensi.
 - `src/Customer.tsx`: storefront, katalog, checkout, pelacakan.
-- `src/AI.tsx`: crop gambar dan asisten renovasi.
+- `src/AI.tsx`, `src/ai-client.ts`: konsultan streaming, rekomendasi belanja dan crop/pengenalan foto.
+- `src/PaintCalculator.tsx`, `src/paint.ts`: kalkulator cat dinding dan rumus teruji.
+- `server/ai.ts`, `server/worker.ts`: endpoint inferensi server, validasi, streaming dan pembatasan input.
 - `src/Admin.tsx`: backoffice; dimuat hanya saat dibuka.
 - `src/documents.ts`: PDF asli dengan jsPDF yang dimuat sesuai kebutuhan.
 - `public/`: aset lokal sehingga demo tidak bergantung pada layanan gambar/font eksternal.

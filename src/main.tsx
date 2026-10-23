@@ -35,6 +35,7 @@ import {
   Orders,
 } from "./Customer";
 import { VisualSearch, Advisor } from "./AI";
+import { PaintCalculator } from "./PaintCalculator";
 const AdminShell = lazy(() =>
   import("./Admin").then((m) => ({ default: m.AdminShell })),
 );
@@ -62,11 +63,13 @@ const InvoiceExtraction = lazy(() =>
 import type { Product } from "./domain";
 import "./styles.css";
 import "./brand.css";
+import "./ai.css";
 function App() {
   const { dark, setDark, cart, authenticated } = useStore();
   const [route, setRoute] = useState(location.hash.slice(1) || "/");
   const [visual, setVisual] = useState(false);
   const [advisor, setAdvisor] = useState(false);
+  const [calculator, setCalculator] = useState(false);
   const [detail, setDetail] = useState<Product | null>(null);
   const [mobile, setMobile] = useState(false);
   const [query, setQuery] = useState("");
@@ -200,8 +203,11 @@ function App() {
                 <button onClick={() => setVisual(true)}>
                   Cari via Foto <span className="nav-ai">AI</span>
                 </button>
+                <button onClick={() => setCalculator(true)}>
+                  Kalkulator Cat
+                </button>
                 <button onClick={() => setAdvisor(true)}>
-                  Kalkulator Renovasi <span className="nav-ai">AI</span>
+                  Konsultan Bangunan <span className="nav-ai">AI</span>
                 </button>
                 <a className="mobile-only" href="#/pesanan">
                   Pesanan Saya
@@ -220,6 +226,7 @@ function App() {
               <Home
                 openVisual={() => setVisual(true)}
                 openAdvisor={() => setAdvisor(true)}
+                openCalculator={() => setCalculator(true)}
                 onDetail={setDetail}
               />
             ) : path === "/katalog" ? (
@@ -261,7 +268,10 @@ function App() {
                   Pencarian Visual
                 </button>
                 <button onClick={() => setAdvisor(true)}>
-                  Asisten Renovasi
+                  Konsultan Bangunan AI
+                </button>
+                <button onClick={() => setCalculator(true)}>
+                  Kalkulator Cat Dinding
                 </button>
               </div>
               <div>
@@ -288,13 +298,13 @@ function App() {
                 © {new Date().getFullYear()} Toko Bangunan PB.DY. Dibangun
                 untuk rencana Anda.
               </span>
-              <span>Website simulasi · AI & pembayaran demo</span>
+              <span>Transaksi simulasi · Periksa kembali saran AI</span>
             </div>
           </footer>
           <button
             className="floating-assistant"
             onClick={() => setAdvisor(true)}
-            aria-label="Buka asisten renovasi"
+            aria-label="Buka konsultan bangunan AI"
           >
             <Sparkles size={22} />
             <span>Tanya Rena</span>
@@ -306,6 +316,7 @@ function App() {
         <VisualSearch onClose={() => setVisual(false)} onDetail={setDetail} />
       )}
       {advisor && <Advisor onClose={() => setAdvisor(false)} />}
+      {calculator && <PaintCalculator onClose={() => setCalculator(false)} />}
       {detail && <ProductDetail p={detail} onClose={() => setDetail(null)} />}
       <Toast />
     </>

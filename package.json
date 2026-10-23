@@ -5,29 +5,30 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/build-ai-worker.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "test": "tsx --test tests/*.test.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "framer-motion": "^12.6.0",
+    "jspdf": "^3.0.1",
+    "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "lucide-react": "^0.468.0",
-    "framer-motion": "^12.6.0",
-    "recharts": "^2.15.1",
-    "jspdf": "^3.0.1"
+    "recharts": "^2.15.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.1",
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^22.13.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.4.1",
-    "vite": "^6.2.4",
-    "typescript": "~5.7.2",
+    "esbuild": "^0.28.2",
     "tailwindcss": "^4.1.0",
-    "@tailwindcss/vite": "^4.1.0",
     "tsx": "^4.19.3",
-    "@playwright/test": "^1.51.1",
-    "@types/node": "^22.13.0"
+    "typescript": "~5.7.2",
+    "vite": "^6.2.4"
   }
 }
